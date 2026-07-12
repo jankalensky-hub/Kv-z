@@ -7,7 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"
+        onerror="window.PEERJS_NENACTEN = true"></script>
 <style>
 /* ══════════════════════════════════════════════════════════
    TOKENY
@@ -19,10 +20,11 @@
   --pergamen-2: #C9B896;
   --mech:       #1E4034;
 
-  --lev:     #E9B23C;      /* 🦁 zlatá */
-  --vydra:   #2BA6C6;      /* 🦦 tyrkys */
-  --retrivr: #E2653C;      /* 🐕 oheň */
-  --bobr:    #74AC5F;      /* 🦫 list */
+  /* čtyři barvy odpovědí – pořadí odpovídá tlačítkům 1–4 */
+  --lev:     #E9B23C;      /* zlatá */
+  --vydra:   #2BA6C6;      /* tyrkys */
+  --retrivr: #E2653C;      /* oheň */
+  --bobr:    #74AC5F;      /* list */
 
   --spravne: #74AC5F;
   --spatne:  #B4453A;
@@ -139,11 +141,10 @@ input[type=text]:focus{border-color:var(--lev)}
 .h-odp{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:1000px}
 .h-odp.dve{grid-template-columns:1fr 1fr;max-width:760px}
 .h-odp .o{
-  display:flex;align-items:center;gap:14px;padding:20px 22px;border-radius:2px;
+  display:flex;align-items:center;gap:14px;padding:22px 26px;border-radius:2px;
   font-weight:900;font-size:clamp(1rem,1.7vw,1.5rem);color:#0B1A14;
   position:relative;overflow:hidden;transition:opacity .3s
 }
-.h-odp .o .zvire{font-size:1.5rem}
 .h-odp .o.a0{background:var(--lev)}
 .h-odp .o.a1{background:var(--vydra)}
 .h-odp .o.a2{background:var(--retrivr)}
@@ -236,12 +237,11 @@ input[type=text]:focus{border-color:var(--lev)}
 .p-odp{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .p-odp.dve{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
 .p-odp button{
-  border-radius:3px;color:#0B1A14;font-weight:900;font-size:1.25rem;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
-  padding:12px;line-height:1.15;text-align:center;
+  border-radius:3px;color:#0B1A14;font-weight:900;font-size:1.5rem;
+  display:flex;align-items:center;justify-content:center;
+  padding:14px;line-height:1.2;text-align:center;
   transition:transform .1s
 }
-.p-odp button .zv{font-size:2.4rem}
 .p-odp button:active{transform:scale(.95)}
 .p-odp button.a0{background:var(--lev)}
 .p-odp button.a1{background:var(--vydra)}
@@ -333,7 +333,9 @@ select.e-in{cursor:pointer}
 .e-radek{display:flex;gap:12px;flex-wrap:wrap}
 .e-radek > .e-pole{flex:1;min-width:130px}
 .e-moznost{display:flex;align-items:center;gap:10px}
-.e-moznost .zv{font-size:1.5rem;flex:none;width:32px;text-align:center}
+.e-moznost .zv{width:26px;height:26px;flex:none;border-radius:2px}
+.e-moznost .zv.b0{background:var(--lev)}   .e-moznost .zv.b1{background:var(--vydra)}
+.e-moznost .zv.b2{background:var(--retrivr)} .e-moznost .zv.b3{background:var(--bobr)}
 .e-moznost .radio{
   width:34px;height:34px;flex:none;border-radius:50%;border:2px solid #2A5244;
   background:#0A1712;display:grid;place-items:center;font-weight:900;font-size:.9rem
@@ -369,10 +371,10 @@ select.e-in{cursor:pointer}
 </head>
 <body>
 
-<!-- ══════════ VÝBĚR ROLE ══════════ -->
-<div id="role" class="wrap">
+<!-- ══════════ MENU VEDOUCÍHO — jen na adrese s #vedu ══════════ -->
+<div id="role" class="wrap hide">
   <div style="text-align:center">
-    <div class="eyebrow">Táborový kvíz</div>
+    <div class="eyebrow">Táborový kvíz · vedoucí</div>
     <h1 style="font-size:clamp(2.6rem,7vw,5rem);margin-top:10px">Strom&nbsp;pokladů</h1>
     <p style="color:var(--pergamen-2);margin-top:14px;font-weight:700">Sova dala mapu. Zbytek je na vás.</p>
   </div>
@@ -382,18 +384,16 @@ select.e-in{cursor:pointer}
       <div class="rc-t">Vedu hru</div>
       <div class="rc-d">Pro notebook u projektoru. Ukáže se kód, který děti zadají na telefonu.</div>
     </button>
-    <button class="role-card" onclick="ukazHrace()">
-      <div style="font-size:2rem">🎒</div>
-      <div class="rc-t">Hraju</div>
-      <div class="rc-d">Pro telefon dítěte. Potřebuješ kód z velké obrazovky.</div>
-    </button>
     <button class="role-card" onclick="ukazEditor()">
       <div style="font-size:2rem">✏️</div>
       <div class="rc-t">Upravit otázky</div>
       <div class="rc-d">Přepiš, přidej, přehoď. Hotové otázky si stáhneš do souboru.</div>
     </button>
   </div>
-  <p class="pozn">Všichni musí být na stejné wifi s přístupem k internetu. Hráči se připojují přímo k notebooku — žádná registrace, žádné účty.</p>
+  <p class="pozn">Dětem dej adresu <b>bez</b> <code>#vedu</code> — uvidí jen políčko na kód a k tomuhle menu se nedostanou.</p>
+
+  <div id="diag" style="font-size:.78rem;color:var(--pergamen-2);text-align:center;line-height:1.7;
+       border-top:1px solid #2A5244;padding-top:14px;max-width:520px;width:100%"></div>
 </div>
 
 <!-- ══════════ EDITOR ══════════ -->
@@ -479,67 +479,54 @@ window.onerror = function(zprava, soubor, radek){
    dvojnasobek: true → dvojnásobné body
    ══════════════════════════════════════════════════════════════════════════ */
 let KVIZ = [
-  {typ:'kviz', cas:20, otazka:'Kolik kamarádů se vydalo hledat Strom pokladů?',
-   moznosti:['Dva','Tři','Čtyři','Deset'], spravne:2},
 
-  {typ:'kviz', cas:20, otazka:'Které zvíře staví na potoce hráz?',
-   moznosti:['Bobr','Liška','Sova','Kapr'], spravne:0},
+  /* ── KRAJ PRVNÍ — Rozcestí ── */
+  {typ:'kviz', cas:20, otazka:"Kolik kamarádů se vydalo hledat Strom pokladů?", moznosti:["Dva","Tři","Čtyři","Deset"], spravne:2},
+  {typ:'kviz', cas:20, otazka:"Které zvíře staví na potoce hráz?", moznosti:["Bobr","Liška","Sova","Kapr"], spravne:0},
+  {typ:'kviz', cas:20, otazka:"Kolik nohou má pavouk?", moznosti:["Šest","Osm","Deset","Čtyři"], spravne:1},
+  {typ:'slider', cas:30, otazka:"Kolik dní má rok?", min:300, max:400, spravne:365},
+  {typ:'kviz', cas:20, otazka:"Lední medvěd má pod bílou srstí černou kůži.", moznosti:["Pravda","Nepravda"], spravne:0},
+  {typ:'reveal', cas:30, otazka:"Co se skrývá na obrázku?", moznosti:["Ježek","Kaštan","Kartáč","Bodlák"], spravne:0, obrazek:'', pokyn:"Doplň fotku ježka do pole Obrázek."},
+  {typ:'kviz', cas:20, otazka:"Které zvíře nosí mládě v kapse na břiše?", moznosti:["Klokan","Zebra","Tygr","Delfín"], spravne:0},
+  {typ:'kviz', cas:25, otazka:"Která planeta se přezdívá „rudá planeta“?", moznosti:["Venuše","Mars","Jupiter","Saturn"], spravne:1},
+  {typ:'puzzle', cas:60, otazka:"Seřaď části dne od rána do noci", poradi:["Ráno","Poledne","Večer","Noc"]},
+  {typ:'kviz', cas:20, otazka:"Co se stane s vodou, když ji dáš do mrazáku?", moznosti:["Zmrzne","Vypaří se","Zežloutne","Zmizí"], spravne:0},
 
-  {typ:'kviz', cas:20, otazka:'Lední medvěd má pod bílou srstí černou kůži.',
-   moznosti:['Pravda','Nepravda'], spravne:0},
+  /* ── KRAJ DRUHÝ — Hluboký les ── */
+  {typ:'slider', cas:30, otazka:"Kolik zubů má dospělý člověk?", min:10, max:50, spravne:32},
+  {typ:'kviz', cas:30, otazka:"Které zvíře vydává tento zvuk?", moznosti:["Sova","Vlk","Žába","Krocan"], spravne:0, zvuk:'', pokyn:"Zvuk se pustí sám. Otoč obrazovku od dětí, ať jedou jen po sluchu."},
+  {typ:'kviz', cas:25, otazka:"Co udělá housenka, než se z ní stane motýl?", moznosti:["Zakuklí se","Zahrabe se do písku","Postaví si hnízdo","Nic"], spravne:0},
+  {typ:'kviz', cas:25, otazka:"Která hora je nejvyšší na světě?", moznosti:["Mont Blanc","Mount Everest","Sněžka","Kilimandžáro"], spravne:1},
+  {typ:'puzzle', cas:60, otazka:"Seřaď zvířata od nejmenšího po největší", poradi:["Mravenec","Myš","Koza","Slon"]},
+  {typ:'kviz', cas:20, otazka:"Kolik měsíců má rok?", moznosti:["Sedm","Deset","Dvanáct","Dvacet čtyři"], spravne:2},
+  {typ:'kviz', cas:30, otazka:"Jaký hudební nástroj právě slyšíš?", moznosti:["Housle","Kytara","Bubny","Flétna"], spravne:0, zvuk:'', pokyn:"Doplň odkaz na krátkou ukázku nástroje do pole Zvuk."},
+  {typ:'kviz', cas:25, otazka:"Které zvíře v zimě spí zimním spánkem?", moznosti:["Medvěd","Vlk","Liška","Srnka"], spravne:0},
+  {typ:'slider', cas:30, otazka:"Kolik kostí má dospělý člověk?", min:100, max:400, spravne:206},
+  {typ:'kviz', cas:30, otazka:"Kdo napsal knihu o Ferdovi Mravencovi?", moznosti:["Josef Lada","Ondřej Sekora","Karel Čapek","Božena Němcová"], spravne:1},
 
-  {typ:'reveal', cas:30, otazka:'Co se skrývá na obrázku?',
-   obrazek:'', /* ← sem URL fotky ježka */
-   moznosti:['Ježek','Kaštan','Kartáč','Bodlák'], spravne:0},
+  /* ── KRAJ TŘETÍ — Údolí zkoušek ── */
+  {typ:'kviz', cas:20, otazka:"Jaká barva vznikne, když smícháš modrou a žlutou?", moznosti:["Zelená","Fialová","Oranžová","Růžová"], spravne:0},
+  {typ:'reveal', cas:30, otazka:"Co se skrývá na obrázku?", moznosti:["List javoru","Hvězdice","Dlaň","Sněhová vločka"], spravne:0, obrazek:'', pokyn:"Doplň fotku javorového listu do pole Obrázek."},
+  {typ:'kviz', cas:25, otazka:"Které zvíře dokáže měnit barvu?", moznosti:["Chameleon","Slon","Kráva","Kůň"], spravne:0},
+  {typ:'slider', cas:30, otazka:"Kolik sekund má jedna hodina?", min:100, max:5000, spravne:3600},
+  {typ:'puzzle', cas:60, otazka:"Seřaď planety podle vzdálenosti od Slunce", poradi:["Merkur","Venuše","Země","Mars"]},
+  {typ:'kviz', cas:20, otazka:"Co potřebuje rostlina, aby rostla?", moznosti:["Světlo a vodu","Tmu a sníh","Písek a olej","Nepotřebuje nic"], spravne:0},
+  {typ:'text', cas:30, otazka:"Jak se jmenuje největší oceán na světě?", prijmi:["tichy","tichy ocean","pacifik"]},
+  {typ:'kviz', cas:25, otazka:"Kolik hran má krychle?", moznosti:["Šest","Osm","Dvanáct","Šestnáct"], spravne:2},
+  {typ:'kviz', cas:20, otazka:"Co vyrábí včela?", moznosti:["Med","Sýr","Pavučinu","Papír"], spravne:0},
+  {typ:'slider', cas:30, otazka:"Kolik metrů měří nejvyšší strom světa?", min:50, max:150, spravne:116, pokyn:"Je to sekvoj v Kalifornii. Jmenuje se Hyperion."},
 
-  {typ:'kviz', cas:20, otazka:'Která planeta se přezdívá „rudá planeta“?',
-   moznosti:['Venuše','Mars','Jupiter','Saturn'], spravne:1},
-
-  {typ:'slider', cas:30, otazka:'Kolik zubů má dospělý člověk?',
-   min:10, max:50, spravne:32},
-
-  {typ:'kviz', cas:20, otazka:'Co se stane s vodou, když ji dáš do mrazáku?',
-   moznosti:['Zmrzne','Vypaří se','Zežloutne','Zmizí'], spravne:0},
-
-  {typ:'kviz', cas:30, otazka:'Které zvíře vydává tento zvuk?',
-   pokyn:'Pusť dětem zvuk sovy — teprve pak klikni na Spustit odpočet.',
-   moznosti:['Sova','Vlk','Žába','Krocan'], spravne:0},
-
-  {typ:'puzzle', cas:60, otazka:'Seřaď zvířata od nejmenšího po největší',
-   poradi:['Mravenec','Myš','Koza','Slon']},
-
-  {typ:'kviz', cas:20, otazka:'Kolik měsíců má rok?',
-   moznosti:['Sedm','Deset','Dvanáct','Dvacet čtyři'], spravne:2},
-
-  {typ:'kviz', cas:30, otazka:'Kdo napsal knihu o Ferdovi Mravencovi?',
-   moznosti:['Josef Lada','Ondřej Sekora','Karel Čapek','Božena Němcová'], spravne:1},
-
-  {typ:'slider', cas:30, otazka:'Kolik kostí má dospělý člověk?',
-   min:100, max:400, spravne:206},
-
-  {typ:'kviz', cas:20, otazka:'Jaká barva vznikne, když smícháš modrou a žlutou?',
-   moznosti:['Zelená','Fialová','Oranžová','Růžová'], spravne:0},
-
-  {typ:'text', cas:30, otazka:'Jak se jmenuje největší oceán na světě?',
-   prijmi:['tichy','tichy ocean','pacifik']},
-
-  {typ:'kviz', cas:20, otazka:'Kolik je 7 × 8?',
-   moznosti:['48','54','56','64'], spravne:2},
-
-  {typ:'reveal', cas:30, otazka:'Kdo se skrývá na obrázku?',
-   obrazek:'', /* ← sem URL fotky vedoucího */
-   pokyn:'Doplň fotku vedoucího do pole obrazek a přepiš jména v moznosti.',
-   moznosti:['Vedoucí 1','Vedoucí 2','Vedoucí 3','Vedoucí 4'], spravne:0},
-
-  {typ:'kviz', cas:20, otazka:'Co vyrábí včela?',
-   moznosti:['Med','Sýr','Pavučinu','Papír'], spravne:0},
-
-  {typ:'slider', cas:60, otazka:'Kolik bonbónů je ve sklenici?',
-   pokyn:'Zvedni sklenici nad hlavu. Vítěz si ji bere.',
-   min:20, max:300, spravne:137, dvojnasobek:true},
+  /* ── KRAJ ČTVRTÝ — Strom pokladů ── */
+  {typ:'kviz', cas:25, otazka:"Které zvíře je nejrychlejší na souši?", moznosti:["Gepard","Lev","Kůň","Pštros"], spravne:0},
+  {typ:'kviz', cas:25, otazka:"Kolik teček je dohromady na protilehlých stěnách hrací kostky?", moznosti:["Pět","Šest","Sedm","Osm"], spravne:2},
+  {typ:'text', cas:30, otazka:"Napiš, jak se jmenuje hlavní město Slovenska.", prijmi:["bratislava"]},
+  {typ:'kviz', cas:20, otazka:"Kolik je 7 × 8?", moznosti:["48","54","56","64"], spravne:2},
+  {typ:'reveal', cas:30, otazka:"Kdo se skrývá na obrázku?", moznosti:["Vedoucí 1","Vedoucí 2","Vedoucí 3","Vedoucí 4"], spravne:0, obrazek:'', pokyn:"Doplň rozmazanou fotku vedoucího a přepiš jména v možnostech."},
+  {typ:'kviz', cas:25, otazka:"Kdo namaloval Monu Lisu?", moznosti:["Leonardo da Vinci","Pablo Picasso","Vincent van Gogh","Alfons Mucha"], spravne:0},
+  {typ:'kviz', cas:25, otazka:"Kolik je 12 × 12?", moznosti:["124","132","144","154"], spravne:2},
+  {typ:'slider', cas:60, otazka:"Kolik bonbónů je ve sklenici?", min:20, max:300, spravne:137, pokyn:"Zvedni sklenici nad hlavu. Vítěz si ji bere — i kdyby skončil poslední.", dvojnasobek:true},
 ];
 
-const ZVIRE = ['🦁','🦦','🐕','🦫'];
 const $ = s => document.querySelector(s);
 const bezDiakritiky = s => s.toLowerCase().trim()
   .normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,'');
@@ -648,6 +635,7 @@ function hSpustOdpocet(){
     <div class="q-typ">Otázka ${hIdx+1} z ${KVIZ.length}${q.dvojnasobek?' · dvojnásobné body':''}</div>
     <div class="q-text">${esc(q.otazka)}</div>
     ${media}
+    ${q.zvuk ? `<button class="btn" id="hZvuk" onclick="prehrajZvuk()">🔊 Přehrát znovu</button>` : ''}
     <div class="cas">
       <div class="cas-kruh" id="ck">
         <svg width="74" height="74"><circle class="bg" cx="37" cy="37" r="32"/>
@@ -659,7 +647,7 @@ function hSpustOdpocet(){
     </div>
     ${hostPanelOdpovedi(q)}`;
 
-  if(q.zvuk){ try{ new Audio(q.zvuk).play(); }catch(e){} }
+  if(q.zvuk) prehrajZvuk();
   if(q.typ === 'reveal' && q.obrazek) spustReveal(q.cas);
 
   $('#hBtn').disabled = true;
@@ -681,7 +669,7 @@ function hostPanelOdpovedi(q){
   if(q.typ === 'kviz' || q.typ === 'reveal'){
     const dve = q.moznosti.length === 2 ? ' dve' : '';
     return `<div class="h-odp${dve}" id="hpanel">` + q.moznosti.map((m,i) =>
-      `<div class="o a${i}" data-i="${i}"><span class="zvire">${ZVIRE[i]}</span>${esc(m)}
+      `<div class="o a${i}" data-i="${i}">${esc(m)}
         <span class="pocet" id="pc${i}">0</span></div>`).join('') + '</div>';
   }
   if(q.typ === 'slider')
@@ -701,6 +689,29 @@ function spustReveal(cas){
   });
 }
 
+/* ── ZVUK ──
+   Prohlížeč nedovolí přehrát zvuk sám od sebe. Tady to projde, protože hru
+   posouváš kliknutím — to se počítá jako svolení. Když by to přesto selhalo,
+   je tu tlačítko Přehrát znovu. ── */
+let hAudio = null;
+
+function prehrajZvuk(){
+  const q = KVIZ[hIdx];
+  if(!q || !q.zvuk) return;
+  zastavZvuk();
+  hAudio = new Audio(q.zvuk);
+  const b = $('#hZvuk');
+  hAudio.onerror = () => { if(b) b.innerHTML = '<span class="chyba">Zvuk se nenačetl — zkontroluj odkaz</span>'; };
+  hAudio.onended = () => { if(b) b.textContent = '🔊 Přehrát znovu'; };
+  const p = hAudio.play();
+  if(p && p.catch) p.catch(() => { if(b) b.textContent = '🔊 Klikni pro přehrání'; });
+  if(b) b.textContent = '🔊 Hraje… (klikni pro znovu)';
+}
+
+function zastavZvuk(){
+  if(hAudio){ try{ hAudio.pause(); }catch(e){} hAudio = null; }
+}
+
 function prijmiOdpoved(id, v){
   if(hFaze !== 'otazka' || hOdpovedi.has(id)) return;
   hOdpovedi.set(id, {v, cas: (Date.now() - hStart) / 1000});
@@ -711,6 +722,7 @@ function prijmiOdpoved(id, v){
 function hostUkazVysledek(){
   if(hFaze !== 'otazka') return;
   clearInterval(hTimer);
+  zastavZvuk();
   hFaze = 'vysledek';
   const q = KVIZ[hIdx];
   const nasob = q.dvojnasobek ? 2 : 1;
@@ -858,8 +870,10 @@ function ukazHrace(){
   $('#hrac').classList.remove('hide');
   $('#pStage').innerHTML = `
     <div class="p-cekam">
-      <div style="font-size:3rem">🎒</div>
-      <div class="velky">Připoj se k výpravě</div>
+      <div style="font-size:3.4rem">🦉</div>
+      <div class="eyebrow">Táborový kvíz</div>
+      <div class="velky" style="font-family:var(--display);font-size:2.4rem;margin-top:-6px">Strom pokladů</div>
+      <p class="pozn" style="margin-bottom:6px">Kód najdeš na velké obrazovce.</p>
       <input type="text" id="pKod" placeholder="Kód hry" inputmode="numeric" maxlength="4">
       <input type="text" id="pJm" placeholder="Tvoje jméno" maxlength="14">
       <button class="btn" onclick="pripoj()">Jdu do toho</button>
@@ -919,8 +933,7 @@ function pOtazka(q){
   if(q.typ === 'kviz' || q.typ === 'reveal'){
     const dve = q.moznosti.length === 2 ? ' dve' : '';
     $('#pStage').innerHTML = `<div class="p-odp${dve}">` + q.moznosti.map((m,i) =>
-      `<button class="a${i}" onclick="posli(${i})">
-         <span class="zv">${ZVIRE[i]}</span><span>${esc(m)}</span></button>`).join('') + '</div>';
+      `<button class="a${i}" onclick="posli(${i})">${esc(m)}</button>`).join('') + '</div>';
 
   } else if(q.typ === 'slider'){
     const stred = Math.round((q.min + q.max) / 2);
@@ -1008,9 +1021,11 @@ const TYPY = {
 };
 let eOtevrena = -1;
 
-/* pokus o uložení do prohlížeče; když nejde (přísné prostředí), tiše se přejde na export */
-const eUloz = () => { try{ localStorage.setItem('strom-kviz', JSON.stringify(KVIZ)); return true; }catch(e){ return false; } };
-const eObnov = () => { try{ const s = localStorage.getItem('strom-kviz'); if(s) KVIZ = JSON.parse(s); }catch(e){} };
+/* Klíč nese číslo verze. Když sadu otázek v souboru vyměníš, zvedni číslo —
+   prohlížeč pak zahodí to, co si pamatoval, a načte nové otázky. */
+const KLIC = 'strom-kviz-v2';
+const eUloz  = () => { try{ localStorage.setItem(KLIC, JSON.stringify(KVIZ)); return true; }catch(e){ return false; } };
+const eObnov = () => { try{ const s = localStorage.getItem(KLIC); if(s) KVIZ = JSON.parse(s); }catch(e){} };
 
 function ukazEditor(){
   eObnov();
@@ -1067,7 +1082,7 @@ function eDetail(q, i){
           <div class="e-moznost">
             <button class="radio${q.spravne === j ? ' on' : ''}" onclick="eSpravne(${i},${j})">
               ${q.spravne === j ? '✓' : ''}</button>
-            <span class="zv">${ZVIRE[j]}</span>
+            <span class="zv b${j}"></span>
             <input class="e-in" value="${esc(m)}" oninput="ePole(${i},'moznosti',this.value,${j})">
             ${q.moznosti.length > 2
               ? `<button class="smaz" onclick="eSmazMoznost(${i},${j})" title="Smazat">×</button>` : ''}
@@ -1123,6 +1138,21 @@ function eDetail(q, i){
         onerror="this.style.display='none'">` : ''}
     </div>` : '';
 
+  const zvukPole = `
+    <div class="e-pole">
+      <label>Zvuk — odkaz na nahrávku (nepovinné)</label>
+      <div style="display:flex;gap:10px">
+        <input class="e-in" value="${esc(q.zvuk || '')}" placeholder="https://…/zvuk.mp3"
+               oninput="ePole(${i},'zvuk',this.value)">
+        ${q.zvuk ? `<button class="btn ghost" style="padding:11px 18px;flex:none"
+                    onclick="eZkusZvuk(${i})">▶︎</button>` : ''}
+      </div>
+      <p class="e-hint">Musí to být <b>přímý odkaz na zvukový soubor</b> (končí na .mp3, .m4a, .ogg).
+        Odkaz na YouTube nebo Spotify nefunguje — ty stránky přehrát nejdou.
+        Zvuk se pustí sám, jakmile otázku spustíš, a na obrazovce máš tlačítko na zopakování.</p>
+      <p class="e-hint" id="eZvukStav${i}"></p>
+    </div>`;
+
   return `
     <div class="e-telo">
       <p class="e-hint">${TYPY[q.typ].popis}</p>
@@ -1153,6 +1183,7 @@ function eDetail(q, i){
 
       ${specificke}
       ${obrazekPole}
+      ${zvukPole}
 
       <div class="e-pole">
         <label>Pokyn pro tebe — ukáže se před otázkou jen na velké obrazovce</label>
@@ -1186,6 +1217,26 @@ function ePole(i, klic, hodnota, index){
     clearTimeout(ePole.t);
     ePole.t = setTimeout(() => s.classList.remove('vid'), 2200);
   }
+  // tlačítko na zkoušku zvuku se objeví, jakmile je odkaz vyplněný
+  if(klic === 'zvuk'){
+    clearTimeout(ePole.tz);
+    ePole.tz = setTimeout(() => { if(eOtevrena === i) eKresli(); }, 900);
+  }
+}
+
+let eAudio = null;
+function eZkusZvuk(i){
+  const stav = $('#eZvukStav' + i);
+  if(eAudio){ try{ eAudio.pause(); }catch(e){} }
+  eAudio = new Audio(KVIZ[i].zvuk);
+  stav.innerHTML = 'Načítám…';
+  eAudio.oncanplay = () => stav.innerHTML =
+    '<span style="color:var(--spravne);font-weight:900">Zvuk funguje ✓</span>';
+  eAudio.onerror = () => stav.innerHTML =
+    '<span class="chyba">Zvuk se nenačetl. Odkaz musí vést přímo na soubor .mp3 nebo .m4a.</span>';
+  const p = eAudio.play();
+  if(p && p.catch) p.catch(() => stav.innerHTML =
+    '<span class="chyba">Prohlížeč zvuk nepustil. Klikni na ▶︎ ještě jednou.</span>');
 }
 
 function eSpravne(i, j){ KVIZ[i].spravne = j; eZmena(); }
@@ -1293,6 +1344,51 @@ function eHrat(){
   }
   $('#editor').classList.add('hide');
   spustHosta();
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ROZCESTNÍK
+   Výchozí adresa = obrazovka pro dítě. Menu vedoucího je schované za #vedu,
+   aby na něj děti během hry nenarazily.
+   ══════════════════════════════════════════════════════════════════════════ */
+(function start(){
+  const kontrola = zkontrolujProstredi();
+
+  if(location.hash === '#vedu'){
+    $('#role').classList.remove('hide');
+    $('#diag').innerHTML = kontrola;
+  } else {
+    ukazHrace();
+  }
+})();
+
+function zkontrolujProstredi(){
+  const testy = [
+    ['JavaScript běží', true],
+    ['PeerJS načten', !window.PEERJS_NENACTEN && typeof Peer !== 'undefined'],
+    ['WebRTC dostupné', typeof RTCPeerConnection !== 'undefined'],
+    ['Ukládání otázek', (() => { try{ localStorage.setItem('t','1');
+        localStorage.removeItem('t'); return true; }catch(e){ return false; } })()],
+    ['Stránka z adresy (ne ze souboru)', location.protocol.indexOf('http') === 0],
+  ];
+  const radky = testy.map(([jm, ok]) =>
+    `<span style="color:${ok ? 'var(--spravne)' : 'var(--retrivr)'};font-weight:900">
+       ${ok ? '✓' : '✕'}</span> ${jm}`).join(' &nbsp;·&nbsp; ');
+
+  let rada = '';
+  if(testy.some(t => !t[1])){
+    rada = `<div style="color:var(--lev);font-weight:900;margin-top:10px;line-height:1.5">
+      V tomhle prohlížeči hra nepoběží celá.<br>
+      Nahraj soubor jako <b>index.html</b> na GitHub Pages a otevři ho z adresy https://…</div>`;
+  }
+
+  // Peer chybí → ať tlačítko neselže tiše
+  if(typeof Peer === 'undefined'){
+    window.Peer = function(){
+      throw new Error('PeerJS se nenačetl — hra potřebuje připojení k internetu.');
+    };
+  }
+  return radky + rada;
 }
 </script>
 </body>
