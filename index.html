@@ -448,17 +448,42 @@ select.e-in{cursor:pointer}
 </div>
 
 <script>
-/* ── Chyby ukážeme na stránce. Na telefonu není konzole, kam se podívat. ── */
+/* ── Chyby ukážeme na stránce. Na telefonu není konzole, kam se podívat.
+      Prohlížeče a jejich rozšíření si do stránky vstřikují vlastní skripty
+      (Brave, Chrome na iOSu, blokovače reklam) a ty občas spadnou. S kvízem
+      to nemá nic společného, tak takové chyby přejdeme mlčky. ── */
+const CIZI_CHYBY = [
+  '__gCrWeb', 'gCrWeb',       // Chrome / Brave na iOSu
+  'Script error',             // chyba v cizí doméně, prohlížeč detaily nedá
+  'ResizeObserver',           // neškodný šum některých prohlížečů
+  'webkit', 'evaluateJavaScript',
+  'chrome-extension', 'moz-extension', 'safari-extension',
+];
+
 window.onerror = function(zprava, soubor, radek){
-  var b = document.getElementById('chybovyPruh');
+  const t = String(zprava) + ' ' + String(soubor || '');
+  if(CIZI_CHYBY.some(v => t.indexOf(v) > -1)) return false;   // není naše, neřešíme
+
+  let b = document.getElementById('chybovyPruh');
   if(!b){
     b = document.createElement('div');
     b.id = 'chybovyPruh';
     b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#B4453A;'
-      + 'color:#fff;font:700 13px/1.4 system-ui,sans-serif;padding:12px 14px;white-space:pre-wrap';
+      + 'color:#fff;font:700 13px/1.4 system-ui,sans-serif;padding:12px 40px 12px 14px;'
+      + 'white-space:pre-wrap';
+    const x = document.createElement('button');
+    x.textContent = '×';
+    x.style.cssText = 'position:absolute;top:6px;right:10px;background:none;border:none;'
+      + 'color:#fff;font-size:22px;font-weight:700;cursor:pointer;padding:0 6px';
+    x.onclick = () => b.remove();
+    b.appendChild(x);
+    const t2 = document.createElement('div');
+    t2.id = 'chybovyText';
+    b.appendChild(t2);
     document.body.appendChild(b);
   }
-  b.textContent = 'Chyba: ' + zprava + '\n(řádek ' + radek + ')';
+  document.getElementById('chybovyText').textContent =
+    'Chyba v kvízu: ' + zprava + '\n(řádek ' + radek + ')';
   return false;
 };
 </script>
@@ -484,7 +509,7 @@ let KVIZ = [
   {typ:'kviz', cas:20, otazka:"Kolik kamarádů se vydalo hledat Strom pokladů?", moznosti:["Dva","Tři","Čtyři","Deset"], spravne:2},
   {typ:'kviz', cas:20, otazka:"Které zvíře staví na potoce hráz?", moznosti:["Bobr","Liška","Sova","Kapr"], spravne:0},
   {typ:'kviz', cas:20, otazka:"Kolik nohou má pavouk?", moznosti:["Šest","Osm","Deset","Čtyři"], spravne:1},
-  {typ:'slider', cas:30, otazka:"Kolik dní má rok?", min:300, max:400, spravne:365},
+  {typ:'slider', cas:30, otazka:"Kolik dní má rok?", min:100, max:500, spravne:365},
   {typ:'kviz', cas:20, otazka:"Lední medvěd má pod bílou srstí černou kůži.", moznosti:["Pravda","Nepravda"], spravne:0},
   {typ:'reveal', cas:30, otazka:"Co se skrývá na obrázku?", moznosti:["Ježek","Kaštan","Kartáč","Bodlák"], spravne:0, obrazek:'', pokyn:"Doplň fotku ježka do pole Obrázek."},
   {typ:'kviz', cas:20, otazka:"Které zvíře nosí mládě v kapse na břiše?", moznosti:["Klokan","Zebra","Tygr","Delfín"], spravne:0},
@@ -493,7 +518,7 @@ let KVIZ = [
   {typ:'kviz', cas:20, otazka:"Co se stane s vodou, když ji dáš do mrazáku?", moznosti:["Zmrzne","Vypaří se","Zežloutne","Zmizí"], spravne:0},
 
   /* ── KRAJ DRUHÝ — Hluboký les ── */
-  {typ:'slider', cas:30, otazka:"Kolik zubů má dospělý člověk?", min:10, max:50, spravne:32},
+  {typ:'slider', cas:30, otazka:"Kolik zubů má dospělý člověk?", min:0, max:80, spravne:32},
   {typ:'kviz', cas:30, otazka:"Které zvíře vydává tento zvuk?", moznosti:["Sova","Vlk","Žába","Krocan"], spravne:0, zvuk:'', pokyn:"Zvuk se pustí sám. Otoč obrazovku od dětí, ať jedou jen po sluchu."},
   {typ:'kviz', cas:25, otazka:"Co udělá housenka, než se z ní stane motýl?", moznosti:["Zakuklí se","Zahrabe se do písku","Postaví si hnízdo","Nic"], spravne:0},
   {typ:'kviz', cas:25, otazka:"Která hora je nejvyšší na světě?", moznosti:["Mont Blanc","Mount Everest","Sněžka","Kilimandžáro"], spravne:1},
@@ -501,20 +526,20 @@ let KVIZ = [
   {typ:'kviz', cas:20, otazka:"Kolik měsíců má rok?", moznosti:["Sedm","Deset","Dvanáct","Dvacet čtyři"], spravne:2},
   {typ:'kviz', cas:30, otazka:"Jaký hudební nástroj právě slyšíš?", moznosti:["Housle","Kytara","Bubny","Flétna"], spravne:0, zvuk:'', pokyn:"Doplň odkaz na krátkou ukázku nástroje do pole Zvuk."},
   {typ:'kviz', cas:25, otazka:"Které zvíře v zimě spí zimním spánkem?", moznosti:["Medvěd","Vlk","Liška","Srnka"], spravne:0},
-  {typ:'slider', cas:30, otazka:"Kolik kostí má dospělý člověk?", min:100, max:400, spravne:206},
+  {typ:'slider', cas:30, otazka:"Kolik kostí má dospělý člověk?", min:50, max:500, spravne:206},
   {typ:'kviz', cas:30, otazka:"Kdo napsal knihu o Ferdovi Mravencovi?", moznosti:["Josef Lada","Ondřej Sekora","Karel Čapek","Božena Němcová"], spravne:1},
 
   /* ── KRAJ TŘETÍ — Údolí zkoušek ── */
   {typ:'kviz', cas:20, otazka:"Jaká barva vznikne, když smícháš modrou a žlutou?", moznosti:["Zelená","Fialová","Oranžová","Růžová"], spravne:0},
   {typ:'reveal', cas:30, otazka:"Co se skrývá na obrázku?", moznosti:["List javoru","Hvězdice","Dlaň","Sněhová vločka"], spravne:0, obrazek:'', pokyn:"Doplň fotku javorového listu do pole Obrázek."},
   {typ:'kviz', cas:25, otazka:"Které zvíře dokáže měnit barvu?", moznosti:["Chameleon","Slon","Kráva","Kůň"], spravne:0},
-  {typ:'slider', cas:30, otazka:"Kolik sekund má jedna hodina?", min:100, max:5000, spravne:3600},
+  {typ:'slider', cas:30, otazka:"Kolik sekund má jedna hodina?", min:60, max:10000, spravne:3600},
   {typ:'puzzle', cas:60, otazka:"Seřaď planety podle vzdálenosti od Slunce", poradi:["Merkur","Venuše","Země","Mars"]},
   {typ:'kviz', cas:20, otazka:"Co potřebuje rostlina, aby rostla?", moznosti:["Světlo a vodu","Tmu a sníh","Písek a olej","Nepotřebuje nic"], spravne:0},
   {typ:'text', cas:30, otazka:"Jak se jmenuje největší oceán na světě?", prijmi:["tichy","tichy ocean","pacifik"]},
   {typ:'kviz', cas:25, otazka:"Kolik hran má krychle?", moznosti:["Šest","Osm","Dvanáct","Šestnáct"], spravne:2},
   {typ:'kviz', cas:20, otazka:"Co vyrábí včela?", moznosti:["Med","Sýr","Pavučinu","Papír"], spravne:0},
-  {typ:'slider', cas:30, otazka:"Kolik metrů měří nejvyšší strom světa?", min:50, max:150, spravne:116, pokyn:"Je to sekvoj v Kalifornii. Jmenuje se Hyperion."},
+  {typ:'slider', cas:30, otazka:"Kolik metrů měří nejvyšší strom světa?", min:20, max:300, spravne:116, pokyn:"Je to sekvoj v Kalifornii. Jmenuje se Hyperion."},
 
   /* ── KRAJ ČTVRTÝ — Strom pokladů ── */
   {typ:'kviz', cas:25, otazka:"Které zvíře je nejrychlejší na souši?", moznosti:["Gepard","Lev","Kůň","Pštros"], spravne:0},
@@ -524,7 +549,7 @@ let KVIZ = [
   {typ:'reveal', cas:30, otazka:"Kdo se skrývá na obrázku?", moznosti:["Vedoucí 1","Vedoucí 2","Vedoucí 3","Vedoucí 4"], spravne:0, obrazek:'', pokyn:"Doplň rozmazanou fotku vedoucího a přepiš jména v možnostech."},
   {typ:'kviz', cas:25, otazka:"Kdo namaloval Monu Lisu?", moznosti:["Leonardo da Vinci","Pablo Picasso","Vincent van Gogh","Alfons Mucha"], spravne:0},
   {typ:'kviz', cas:25, otazka:"Kolik je 12 × 12?", moznosti:["124","132","144","154"], spravne:2},
-  {typ:'slider', cas:60, otazka:"Kolik bonbónů je ve sklenici?", min:20, max:300, spravne:137, pokyn:"Zvedni sklenici nad hlavu. Vítěz si ji bere — i kdyby skončil poslední.", dvojnasobek:true},
+  {typ:'slider', cas:60, otazka:"Kolik bonbónů je ve sklenici?", min:10, max:400, spravne:137, pokyn:"Zvedni sklenici nad hlavu. Vítěz si ji bere — i kdyby skončil poslední.", dvojnasobek:true},
 ];
 
 const $ = s => document.querySelector(s);
@@ -533,50 +558,173 @@ const bezDiakritiky = s => s.toLowerCase().trim()
 
 /* ══════════════════════════════════════════════════════════════════════════
    HOST
+   ──────────────────────────────────────────────────────────────────────────
+   Hráče vedeme podle JMÉNA, ne podle spojení. Spojení se totiž při uspání
+   telefonu nebo přepnutí okna rozpadne a při návratu má úplně jiné číslo —
+   podle jména dítě poznáme a vrátíme mu body.
    ══════════════════════════════════════════════════════════════════════════ */
 let hPeer, hKod, hHraci = new Map(), hIdx = -1, hFaze = 'lobby',
-    hStart = 0, hTimer = null, hOdpovedi = new Map();
+    hDeadline = 0, hTimer = null, hOdpovedi = new Map(), hWake = null;
+
+const jmenoKlic = j => bezDiakritiky(String(j)).replace(/\s+/g, '');
+
+/* ── uložení rozehrané hry ── */
+const HRA_KLIC = 'strom-rozehrano';
+function ulozHru(){
+  try{
+    localStorage.setItem(HRA_KLIC, JSON.stringify({
+      kod: hKod, idx: hIdx, kdy: Date.now(),
+      hraci: [...hHraci.values()].map(h => ({jm:h.jm, body:h.body}))
+    }));
+  }catch(e){}
+}
+function nactiHru(){
+  try{
+    const s = JSON.parse(localStorage.getItem(HRA_KLIC));
+    if(s && s.hraci.length && Date.now() - s.kdy < 6*3600*1000) return s;
+  }catch(e){}
+  return null;
+}
+function zapomenHru(){ try{ localStorage.removeItem(HRA_KLIC); }catch(e){} }
+
+/* ── ať obrazovka nezhasne uprostřed hry ── */
+async function drzObrazovku(){
+  try{
+    if('wakeLock' in navigator) hWake = await navigator.wakeLock.request('screen');
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible' && hPeer) drzObrazovku();
+});
 
 function spustHosta(){
-  eObnov();                       // pokud jsi otázky upravoval, hraje se s nimi
+  eObnov();
   $('#role').classList.add('hide');
+  $('#editor').classList.add('hide');
   $('#host').classList.remove('hide');
-  hKod = String(Math.floor(1000 + Math.random()*9000));
+  drzObrazovku();
+
+  const rozehrano = nactiHru();
+  if(rozehrano && rozehrano.idx >= 0){ nabidniObnovu(rozehrano); return; }
+  zalozHru(String(Math.floor(1000 + Math.random()*9000)), -1, []);
+}
+
+function nabidniObnovu(s){
+  $('#hKod').textContent = s.kod;
+  $('#hStezka').innerHTML = '';
+  $('#hStage').innerHTML = `
+    <div style="font-size:3rem">🧭</div>
+    <div class="eyebrow">Našel jsem rozehranou hru</div>
+    <div class="q-text" style="font-size:2rem">Kód ${s.kod} · odehráno ${s.idx + 1} z ${KVIZ.length}</div>
+    <div class="lobby-hraci">${s.hraci.map(h =>
+      `<div class="chip">${esc(h.jm)} · ${h.body}</div>`).join('')}</div>
+    <p class="pozn">Když budeš pokračovat, děti se připojí zpátky <b>na stejný kód a pod stejným jménem</b>
+      a body jim zůstanou. Hra naváže další otázkou.</p>`;
+  $('#hBtn').textContent = 'Pokračovat ve hře';
+  $('#hBtn').disabled = false;
+  $('#hBtn').onclick = () => { zalozHru(s.kod, s.idx, s.hraci); };
+  $('#hSkip').classList.remove('hide');
+  $('#hSkip').textContent = 'Začít úplně znovu';
+  $('#hSkip').onclick = () => {
+    zapomenHru();
+    zalozHru(String(Math.floor(1000 + Math.random()*9000)), -1, []);
+  };
+}
+
+function zalozHru(kod, idx, hraci){
+  hKod = kod;
+  hIdx = idx;
+  hHraci.clear();
+  hraci.forEach(h => hHraci.set(jmenoKlic(h.jm), {jm:h.jm, body:h.body, conn:null, zisk:0}));
+
   $('#hKod').textContent = hKod;
+  $('#hBtn').onclick = hostDal;
+  $('#hSkip').onclick = hostUkazVysledek;
+  $('#hSkip').textContent = 'Ukázat odpovědi hned';
   kresliStezku();
   hLobby();
+  pripojPeer(0);
+}
 
+/* PeerJS se občas nepustí napoprvé (např. když ještě doznívá staré spojení).
+   Zkusíme to několikrát, místo abychom hru shodili. */
+function pripojPeer(pokus){
+  if(hPeer){ try{ hPeer.destroy(); }catch(e){} }
   hPeer = new Peer('strompokladu-' + hKod, {debug:0});
-  hPeer.on('open', () => {});
+
+  hPeer.on('open', () => { $('#hKod').textContent = hKod; });
+
   hPeer.on('error', e => {
-    if(e.type === 'unavailable-id'){ location.reload(); return; }
+    if(e.type === 'unavailable-id' && pokus < 6){
+      $('#hKod').innerHTML = '<span style="font-size:1rem">Připojuji…</span>';
+      setTimeout(() => pripojPeer(pokus + 1), 2000);
+      return;
+    }
+    if(e.type === 'network' || e.type === 'disconnected'){
+      setTimeout(() => { try{ hPeer.reconnect(); }catch(x){} }, 1500);
+      return;
+    }
     $('#hKod').innerHTML = '<span class="chyba" style="font-size:1rem">Bez připojení</span>';
   });
+
+  hPeer.on('disconnected', () => { try{ hPeer.reconnect(); }catch(e){} });
+
   hPeer.on('connection', conn => {
     conn.on('data', d => {
-      if(d.t === 'join'){
-        if(hFaze !== 'lobby'){ conn.send({t:'plno'}); return; }
-        hHraci.set(conn.peer, {jm:d.jm, body:0, conn, zisk:0});
-        conn.send({t:'ok', jm:d.jm});
-        hLobby();
-      }
-      if(d.t === 'odp'){ prijmiOdpoved(conn.peer, d.v); }
+      if(d.t === 'join') prihlas(conn, d.jm);
+      if(d.t === 'odp')  prijmiOdpoved(d.jm, d.v);
     });
-    conn.on('close', () => { hHraci.delete(conn.peer); hLobby(); });
   });
+}
+
+/* Přihlášení i návrat po výpadku řeší jedna cesta: rozhoduje jméno. */
+function prihlas(conn, jm){
+  const k = jmenoKlic(jm);
+  const znamy = hHraci.get(k);
+
+  if(znamy){
+    znamy.conn = conn;                     // dítě se vrátilo, body mu zůstávají
+    conn.send({t:'ok', jm:znamy.jm, body:znamy.body, vratil:true});
+  } else {
+    if(hFaze !== 'lobby'){                 // nový hráč uprostřed hry – ale pustíme ho
+      hHraci.set(k, {jm, body:0, conn, zisk:0});
+      conn.send({t:'ok', jm, body:0, vratil:false});
+    } else {
+      hHraci.set(k, {jm, body:0, conn, zisk:0});
+      conn.send({t:'ok', jm, body:0, vratil:false});
+    }
+  }
+
+  ulozHru();
+  if(hFaze === 'lobby') hLobby();
+  else if(hFaze === 'otazka') poslliAktualniOtazku(hHraci.get(k));
+  else hHraci.get(k).conn.send({t:'cekej'});
+}
+
+function poslliAktualniOtazku(h){
+  const q = KVIZ[hIdx];
+  if(!q || !h.conn) return;
+  const zbyva = Math.max(3, Math.ceil((hDeadline - Date.now()) / 1000));
+  h.conn.send({t:'otazka', typ:q.typ, cas:zbyva, otazka:q.otazka,
+               moznosti:q.moznosti, min:q.min, max:q.max,
+               poradi:q.poradi ? zamichej(q.poradi) : null});
 }
 
 function hLobby(){
   hFaze = 'lobby';
-  $('#hPocet').textContent = hHraci.size;
-  const jm = [...hHraci.values()].map(h => `<div class="chip">${esc(h.jm)}</div>`).join('');
+  $('#hPocet').textContent = pripojenych();
+  const jm = [...hHraci.values()].map(h => {
+    const off = !(h.conn && h.conn.open);
+    return `<div class="chip"${off ? ' style="opacity:.4"' : ''}>${esc(h.jm)}${off ? ' ⏳' : ''}</div>`;
+  }).join('');
   $('#hStage').innerHTML = `
     <div class="eyebrow">Na telefonu otevři tuhle stránku a zadej kód</div>
     <div style="font-family:var(--display);font-weight:800;font-size:clamp(4rem,13vw,9rem);
                 letter-spacing:.1em;color:var(--lev);line-height:1">${hKod}</div>
     <div class="lobby-hraci">${jm || '<p class="pozn">Zatím nikdo. Čekáme na poutníky…</p>'}</div>`;
-  $('#hBtn').textContent = 'Vyrazit na cestu';
-  $('#hBtn').disabled = hHraci.size === 0;
+  $('#hBtn').textContent = hIdx >= 0
+    ? `Pokračovat otázkou ${hIdx + 2}` : 'Vyrazit na cestu';
+  $('#hBtn').disabled = pripojenych() === 0;
   $('#hSkip').classList.add('hide');
 }
 
@@ -615,9 +763,9 @@ function hUkazOtazku(){
 function hSpustOdpocet(){
   const q = KVIZ[hIdx];
   hFaze = 'otazka';
-  hStart = Date.now();
+  hDeadline = Date.now() + q.cas * 1000;
+  hOdpovedi.clear();
 
-  // hráčům jen to, co potřebují – správná odpověď u nich nemá co dělat
   vsem({t:'otazka', typ:q.typ, cas:q.cas, otazka:q.otazka,
         moznosti:q.moznosti, min:q.min, max:q.max, poradi:q.poradi ? zamichej(q.poradi) : null});
 
@@ -643,7 +791,7 @@ function hSpustOdpocet(){
           stroke-dasharray="201" stroke-dashoffset="0"/></svg>
         <span id="ckt">${q.cas}</span>
       </div>
-      <div class="odpovedelo"><b id="hOdp">0</b> / ${hHraci.size} odpovědělo</div>
+      <div class="odpovedelo"><b id="hOdp">0</b> / ${pripojenych()} odpovědělo</div>
     </div>
     ${hostPanelOdpovedi(q)}`;
 
@@ -654,15 +802,17 @@ function hSpustOdpocet(){
   $('#hBtn').textContent = '…';
   $('#hSkip').classList.remove('hide');
 
-  let zbyva = q.cas;
+  // Odpočítáváme podle skutečného času. Kdyby prohlížeč stránku uspal,
+  // po probuzení sedí zbývající čas dál — nesčítají se tiky, které nepřišly.
+  clearInterval(hTimer);
   hTimer = setInterval(() => {
-    zbyva--;
+    const zbyva = Math.max(0, Math.ceil((hDeadline - Date.now()) / 1000));
     const t = $('#ckt'); if(!t) return;
-    t.textContent = Math.max(0, zbyva);
-    $('#ckf').style.strokeDashoffset = 201 * (1 - zbyva/q.cas);
+    t.textContent = zbyva;
+    $('#ckf').style.strokeDashoffset = 201 * (1 - zbyva / q.cas);
     if(zbyva <= 5) $('#ck').classList.add('malo');
     if(zbyva <= 0) hostUkazVysledek();
-  }, 1000);
+  }, 250);
 }
 
 function hostPanelOdpovedi(q){
@@ -712,12 +862,17 @@ function zastavZvuk(){
   if(hAudio){ try{ hAudio.pause(); }catch(e){} hAudio = null; }
 }
 
-function prijmiOdpoved(id, v){
-  if(hFaze !== 'otazka' || hOdpovedi.has(id)) return;
-  hOdpovedi.set(id, {v, cas: (Date.now() - hStart) / 1000});
+function prijmiOdpoved(jm, v){
+  const k = jmenoKlic(jm);
+  if(hFaze !== 'otazka' || hOdpovedi.has(k) || !hHraci.has(k)) return;
+  const q = KVIZ[hIdx];
+  const uplynulo = q.cas - Math.max(0, (hDeadline - Date.now()) / 1000);
+  hOdpovedi.set(k, {v, cas: Math.max(0, uplynulo)});
   const e = $('#hOdp'); if(e) e.textContent = hOdpovedi.size;
-  if(hOdpovedi.size >= hHraci.size) setTimeout(hostUkazVysledek, 400);
+  if(hOdpovedi.size >= pripojenych()) setTimeout(hostUkazVysledek, 400);
 }
+
+const pripojenych = () => [...hHraci.values()].filter(h => h.conn && h.conn.open).length;
 
 function hostUkazVysledek(){
   if(hFaze !== 'otazka') return;
@@ -728,8 +883,8 @@ function hostUkazVysledek(){
   const nasob = q.dvojnasobek ? 2 : 1;
 
   // body
-  for(const [id, h] of hHraci){
-    const o = hOdpovedi.get(id);
+  for(const [k, h] of hHraci){
+    const o = hOdpovedi.get(k);
     let zisk = 0, ok = false;
     if(o){
       const rychlost = 1 - 0.5 * Math.min(1, o.cas / q.cas);
@@ -739,8 +894,8 @@ function hostUkazVysledek(){
       } else if(q.typ === 'slider'){
         const rozsah = q.max - q.min;
         const odchylka = Math.abs(o.v - q.spravne);
-        ok = odchylka <= rozsah * 0.03;
-        zisk = Math.max(0, Math.round(1000 * (1 - odchylka / (rozsah * 0.4))));
+        ok = odchylka <= rozsah * 0.02;
+        zisk = Math.max(0, Math.round(1000 * (1 - odchylka / (rozsah * 0.3))));
       } else if(q.typ === 'puzzle'){
         const trefa = q.poradi.filter((p,i) => o.v[i] === p).length;
         ok = trefa === q.poradi.length;
@@ -757,8 +912,9 @@ function hostUkazVysledek(){
 
   // pořadí (pro zprávu hráči)
   const zebr = [...hHraci.entries()].sort((a,b) => b[1].body - a[1].body);
-  zebr.forEach(([id,h],i) => {
-    const o = hOdpovedi.get(id);
+  zebr.forEach(([k,h],i) => {
+    const o = hOdpovedi.get(k);
+    if(!h.conn || !h.conn.open) return;      // dítě je zrovna odpojené, dozví se to po návratu
     h.conn.send({t:'vysledek', zisk:h.zisk, body:h.body, misto:i+1, z:hHraci.size,
                  ok:h.zisk > 0, bezOdpovedi: !o,
                  spravne: q.typ==='kviz'||q.typ==='reveal' ? q.moznosti[q.spravne]
@@ -781,8 +937,8 @@ function hostUkazVysledek(){
   } else if(q.typ === 'slider'){
     const p = $('#hpanel'); if(!p) return;
     const pos = v => ((v - q.min) / (q.max - q.min)) * 100;
-    for(const [id,h] of hHraci){
-      const o = hOdpovedi.get(id); if(!o) continue;
+    for(const [k,h] of hHraci){
+      const o = hOdpovedi.get(k); if(!o) continue;
       p.insertAdjacentHTML('beforeend',
         `<span class="tip" style="left:${pos(o.v)}%"><b>${esc(h.jm)}</b></span>`);
     }
@@ -803,6 +959,7 @@ function hostUkazVysledek(){
 
 function hostZebricek(){
   hFaze = 'zebricek';
+  ulozHru();                       // odsud se dá hra kdykoli obnovit
   const z = [...hHraci.values()].sort((a,b) => b.body - a.body);
   $('#hStage').innerHTML = `
     <div class="eyebrow">Kde jsme na cestě</div>
@@ -821,11 +978,11 @@ function hostFinale(){
   hFaze = 'konec';
   const z = [...hHraci.values()].sort((a,b) => b.body - a.body);
   const [p1,p2,p3] = z;
-  vsem({t:'konec'});
   [...hHraci.values()].forEach((h) => {
-    const misto = z.indexOf(h) + 1;
-    h.conn.send({t:'konec', misto, body:h.body, z:z.length});
+    if(!h.conn || !h.conn.open) return;
+    h.conn.send({t:'konec', misto: z.indexOf(h) + 1, body:h.body, z:z.length});
   });
+  zapomenHru();                    // hra je dohraná, není co obnovovat
   kresliStezku(true);
   $('#hStage').innerHTML = `
     <div style="font-size:4rem">🌳</div>
@@ -838,7 +995,7 @@ function hostFinale(){
     </div>
     <p class="pozn">${p1 ? esc(p1.jm) + ' — ' + p1.body + ' bodů' : ''}</p>`;
   $('#hBtn').textContent = 'Nová hra';
-  $('#hBtn').onclick = () => location.reload();
+  $('#hBtn').onclick = () => { zapomenHru(); location.reload(); };
   $('#hSkip').classList.add('hide');
 }
 
@@ -856,68 +1013,120 @@ function kresliStezku(hotovo){
       <text class="putnik" x="${pos(hotovych)}%" y="24" text-anchor="middle">🦉</text></svg>`;
 }
 
-const vsem = m => hHraci.forEach(h => h.conn.send(m));
+const vsem = m => hHraci.forEach(h => { if(h.conn && h.conn.open) try{ h.conn.send(m); }catch(e){} });
 const zamichej = a => [...a].sort(() => Math.random() - .5);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* ══════════════════════════════════════════════════════════════════════════
    HRÁČ
+   ──────────────────────────────────────────────────────────────────────────
+   Telefon usne, dítě přepne aplikaci, wifi zakolísá — spojení padá pořád.
+   Proto se hráč po výpadku připojuje sám, dokola, dokud se nechytí. Hostu se
+   hlásí jménem, takže mu body zůstanou.
    ══════════════════════════════════════════════════════════════════════════ */
-let pPeer, pConn, pJmeno = '', pBody = 0, pOdeslano = false, pPuzzle = [];
+let pPeer, pConn, pJmeno = '', pKodHry = '', pBody = 0,
+    pOdeslano = false, pPuzzle = [], pVeHre = false, pNavrat = null;
 
 function ukazHrace(){
   $('#role').classList.add('hide');
   $('#hrac').classList.remove('hide');
+
+  let d = {};
+  try{ d = JSON.parse(sessionStorage.getItem('strom-hrac') || '{}'); }catch(e){}
+
   $('#pStage').innerHTML = `
     <div class="p-cekam">
       <div style="font-size:3.4rem">🦉</div>
       <div class="eyebrow">Táborový kvíz</div>
       <div class="velky" style="font-family:var(--display);font-size:2.4rem;margin-top:-6px">Strom pokladů</div>
       <p class="pozn" style="margin-bottom:6px">Kód najdeš na velké obrazovce.</p>
-      <input type="text" id="pKod" placeholder="Kód hry" inputmode="numeric" maxlength="4">
-      <input type="text" id="pJm" placeholder="Tvoje jméno" maxlength="14">
+      <input type="text" id="pKod" placeholder="Kód hry" inputmode="numeric" maxlength="4"
+             value="${esc(d.kod || '')}">
+      <input type="text" id="pJm" placeholder="Tvoje jméno" maxlength="14"
+             value="${esc(d.jm || '')}">
       <button class="btn" onclick="pripoj()">Jdu do toho</button>
-      <p class="pozn" id="pChyba"></p>
+      <p class="pozn" id="pChyba">${d.jm
+        ? 'Vracíš se do hry? Zadej stejné jméno a body ti zůstanou.' : ''}</p>
     </div>`;
 }
 
 function pripoj(){
   const kod = $('#pKod').value.trim();
-  pJmeno = $('#pJm').value.trim();
-  if(kod.length !== 4 || !pJmeno){
+  const jm  = $('#pJm').value.trim();
+  if(kod.length !== 4 || !jm){
     $('#pChyba').innerHTML = '<span class="chyba">Vyplň kód i jméno.</span>'; return;
   }
+  pKodHry = kod;
+  pJmeno = jm;
+  try{ sessionStorage.setItem('strom-hrac', JSON.stringify({kod, jm})); }catch(e){}
   $('#pChyba').textContent = 'Připojuju…';
-  pPeer = new Peer({debug:0});
-  pPeer.on('open', () => {
-    pConn = pPeer.connect('strompokladu-' + kod, {reliable:true});
-    pConn.on('open', () => pConn.send({t:'join', jm:pJmeno}));
-    pConn.on('data', pData);
-    pConn.on('close', () => {
-      $('#pStage').innerHTML = `<div class="p-cekam"><div class="velky">Spojení se ztratilo</div>
-        <button class="btn" onclick="location.reload()">Zkusit znovu</button></div>`;
-    });
-    setTimeout(() => {
-      if(!pConn || !pConn.open) $('#pChyba').innerHTML =
-        '<span class="chyba">Nenašel jsem hru s tímhle kódem. Zkontroluj číslo na velké obrazovce.</span>';
-    }, 5000);
-  });
-  pPeer.on('error', () => {
-    $('#pChyba').innerHTML = '<span class="chyba">Nedaří se připojit. Jsi na stejné wifi?</span>';
-  });
+  spojSe(true);
 }
+
+/* Jedna cesta pro první připojení i pro každý návrat po výpadku. */
+function spojSe(prvni){
+  clearTimeout(pNavrat);
+  if(pPeer){ try{ pPeer.destroy(); }catch(e){} }
+
+  pPeer = new Peer({debug:0});
+
+  pPeer.on('open', () => {
+    pConn = pPeer.connect('strompokladu-' + pKodHry, {reliable:true});
+    pConn.on('open',  () => pConn.send({t:'join', jm:pJmeno}));
+    pConn.on('data',  pData);
+    pConn.on('close', navratDoHry);
+    pConn.on('error', navratDoHry);
+
+    setTimeout(() => {
+      if(pConn && !pConn.open){
+        if(prvni) $('#pChyba').innerHTML =
+          '<span class="chyba">Hru s tímhle kódem nenacházím. Zkontroluj číslo na velké obrazovce.</span>';
+        else navratDoHry();
+      }
+    }, 6000);
+  });
+
+  pPeer.on('error', () => {
+    if(prvni) $('#pChyba').innerHTML =
+      '<span class="chyba">Nedaří se připojit. Jsi na wifi?</span>';
+    else navratDoHry();
+  });
+
+  pPeer.on('disconnected', () => { try{ pPeer.reconnect(); }catch(e){} });
+}
+
+/* Nevzdáváme to — zkoušíme dokola, dokud se dítě nechytí zpátky. */
+function navratDoHry(){
+  if(!pVeHre) return;
+  clearTimeout(pNavrat);
+  $('#pStage').className = 'p-stage';
+  $('#pStage').innerHTML = `
+    <div class="p-cekam">
+      <div style="font-size:2.6rem">🧭</div>
+      <div class="velky">Vracím tě do hry…</div>
+      <p class="pozn">Spojení vypadlo. Body ti zůstávají, jen chvilku vydrž.</p>
+    </div>`;
+  pNavrat = setTimeout(() => spojSe(false), 2500);
+}
+
+/* telefon se probudil → hned ověř, jestli spojení ještě žije */
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible' && pVeHre && (!pConn || !pConn.open)) navratDoHry();
+});
 
 function pData(d){
   if(d.t === 'ok'){
+    pVeHre = true;
+    pBody = d.body || 0;
     $('#pBar').classList.remove('hide');
     $('#pJmeno').textContent = pJmeno;
-    pCekam('Jsi ve hře', 'Koukni na velkou obrazovku.');
+    $('#pBody').textContent = pBody;
+    pCekam(d.vratil ? 'Jsi zpátky' : 'Jsi ve hře', 'Koukni na velkou obrazovku.');
   }
-  if(d.t === 'plno') $('#pChyba').innerHTML = '<span class="chyba">Hra už začala.</span>';
-  if(d.t === 'cekej') pCekam('Chystá se otázka', 'Dívej se na obrazovku.');
-  if(d.t === 'otazka') pOtazka(d);
+  if(d.t === 'cekej')    pCekam('Chystá se otázka', 'Dívej se na obrazovku.');
+  if(d.t === 'otazka')   pOtazka(d);
   if(d.t === 'vysledek') pVysledek(d);
-  if(d.t === 'konec') pKonec(d);
+  if(d.t === 'konec')    pKonec(d);
 }
 
 function pCekam(v, m){
@@ -936,14 +1145,19 @@ function pOtazka(q){
       `<button class="a${i}" onclick="posli(${i})">${esc(m)}</button>`).join('') + '</div>';
 
   } else if(q.typ === 'slider'){
-    const stred = Math.round((q.min + q.max) / 2);
+    // Náhodný start, u každého hráče jiný. Kdyby slider startoval uprostřed,
+    // stačilo by u otázek se správnou odpovědí poblíž středu jen odeslat
+    // výchozí hodnotu — a tipovačka by přestala být tipovačkou.
+    const start = q.min + Math.floor(Math.random() * (q.max - q.min + 1));
     $('#pStage').innerHTML = `
       <div class="p-slider">
-        <div class="cislo" id="sv">${stred}</div>
-        <input type="range" id="sr" min="${q.min}" max="${q.max}" value="${stred}"
-               oninput="document.getElementById('sv').textContent=this.value">
+        <div class="cislo" id="sv">${start}</div>
+        <input type="range" id="sr" min="${q.min}" max="${q.max}" value="${start}"
+               oninput="document.getElementById('sv').textContent=this.value;
+                        document.getElementById('sb').disabled=false">
         <div class="kraje"><span>${q.min}</span><span>${q.max}</span></div>
-        <button class="btn" onclick="posli(+document.getElementById('sr').value)">Tipuju tohle</button>
+        <button class="btn" id="sb" disabled
+                onclick="posli(+document.getElementById('sr').value)">Posuň a tipni</button>
       </div>`;
 
   } else if(q.typ === 'puzzle'){
@@ -978,7 +1192,7 @@ const posliPuzzle = () => posli([...pPuzzle]);
 function posli(v){
   if(pOdeslano || !pConn || !pConn.open) return;
   pOdeslano = true;
-  pConn.send({t:'odp', v});
+  pConn.send({t:'odp', v, jm:pJmeno});
   pCekam('Odesláno', 'Teď už jen čekat.');
 }
 
@@ -1345,6 +1559,14 @@ function eHrat(){
   $('#editor').classList.add('hide');
   spustHosta();
 }
+
+/* Kdyby ses omylem chystal zavřít záložku s běžící hrou, prohlížeč se zeptá. */
+window.addEventListener('beforeunload', e => {
+  if(hPeer && hFaze !== 'konec' && hHraci.size > 0){
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
 
 /* ══════════════════════════════════════════════════════════════════════════
    ROZCESTNÍK
