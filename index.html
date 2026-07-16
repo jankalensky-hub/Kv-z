@@ -92,11 +92,33 @@ input[type=text]:focus{border-color:var(--lev)}
 }
 .stezka svg{width:100%;height:100%;overflow:visible}
 .stezka .dash{stroke:#2F5A49;stroke-width:2;stroke-dasharray:2 9;stroke-linecap:round;fill:none}
-.stezka .done{stroke:var(--lev);stroke-width:2.5;stroke-dasharray:2 9;stroke-linecap:round;fill:none;
-  transition:stroke-dashoffset .6s ease}
+.stezka .done{stroke:var(--lev);stroke-width:2.5;stroke-dasharray:2 9;stroke-linecap:round;fill:none}
 .stezka .krok{fill:#2F5A49}
 .stezka .krok.on{fill:var(--lev)}
-.stezka .putnik{font-size:20px;transition:transform .6s cubic-bezier(.4,1.3,.5,1)}
+
+/* letící sova */
+.sova{
+  position:absolute;top:-6px;font-size:22px;line-height:1;
+  transform:translateX(-50%);
+  /* plachtění na nové místo + jemné houpání nahoru dolů jako v letu */
+  transition:left 1.1s cubic-bezier(.45,.05,.35,1);
+  animation:machni 0.5s ease-in-out infinite alternate;
+  filter:drop-shadow(0 2px 3px #0006);
+  will-change:left, transform;
+}
+@keyframes machni{
+  from{ transform:translateX(-50%) translateY(0)   rotate(-4deg) }
+  to  { transform:translateX(-50%) translateY(-3px) rotate(4deg) }
+}
+/* u cíle zakrouží nad pokladem */
+.sova.dolet{ animation:zakrouzeni 2.4s ease-in-out infinite }
+@keyframes zakrouzeni{
+  0%   { transform:translateX(-50%) translateY(0)    rotate(0deg)   }
+  25%  { transform:translateX(-50%) translateY(-5px) rotate(8deg)   }
+  50%  { transform:translateX(-50%) translateY(0)    rotate(0deg)   }
+  75%  { transform:translateX(-50%) translateY(-5px) rotate(-8deg)  }
+  100% { transform:translateX(-50%) translateY(0)    rotate(0deg)   }
+}
 
 /* ══════════════════════════════════════════════════════════
    HOST
@@ -122,6 +144,17 @@ input[type=text]:focus{border-color:var(--lev)}
   text-align:center;max-width:1000px;line-height:1.12
 }
 .q-media{max-height:34vh;max-width:min(680px,90vw);border:3px solid #2F5A49;border-radius:2px;object-fit:contain}
+
+/* přehrávač zvuku */
+.prehravac{display:flex;align-items:center;gap:16px;background:#122A22;border:2px solid #2F5A49;
+  border-radius:3px;padding:12px 18px;width:min(520px,90vw)}
+.ph-btn{width:48px;height:48px;flex:none;border-radius:50%;background:var(--lev);color:var(--les);
+  font-size:1.1rem;font-weight:900;display:grid;place-items:center;transition:transform .1s}
+.ph-btn:active{transform:scale(.92)}
+.ph-lista{flex:1;height:10px;background:#0A1712;border-radius:5px;cursor:pointer;overflow:hidden}
+.ph-fill{height:100%;width:0;background:var(--lev);border-radius:5px;transition:width .15s linear}
+.ph-cas{font-family:var(--display);font-weight:800;font-size:1rem;color:var(--pergamen-2);
+  min-width:42px;text-align:right}
 
 /* časomíra */
 .cas{display:flex;align-items:center;gap:14px}
@@ -402,13 +435,15 @@ select.e-in{cursor:pointer}
     <div>
       <div class="eyebrow">Editor otázek</div>
       <div style="font-family:var(--display);font-weight:800;font-size:1.7rem">
-        <span id="ePocet">0</span> otázek · <span id="eDelka">0</span> min
+        <span id="ePocet">0</span> otázek · <span id="eDelka">0</span> min<span
+          id="eVelikost" style="font-family:var(--body);font-size:.85rem;font-weight:900"></span>
       </div>
     </div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <span class="e-stav" id="eStav">Uloženo</span>
       <button class="btn ghost" onclick="eNacti()">Načíst ze souboru</button>
       <button class="btn ghost" onclick="eStahni()">Stáhnout otázky</button>
+      <button class="btn ghost" onclick="eStahniHtml()">Stáhnout hotový index.html</button>
       <button class="btn" onclick="eHrat()">Vést hru s těmito otázkami</button>
     </div>
   </div>
@@ -612,6 +647,7 @@ function spustHosta(){
 function nabidniObnovu(s){
   $('#hKod').textContent = s.kod;
   $('#hStezka').innerHTML = '';
+  kresliStezku.kde = 0;
   $('#hStage').innerHTML = `
     <div style="font-size:3rem">🧭</div>
     <div class="eyebrow">Našel jsem rozehranou hru</div>
@@ -783,7 +819,12 @@ function hSpustOdpocet(){
     <div class="q-typ">Otázka ${hIdx+1} z ${KVIZ.length}${q.dvojnasobek?' · dvojnásobné body':''}</div>
     <div class="q-text">${esc(q.otazka)}</div>
     ${media}
-    ${q.zvuk ? `<button class="btn" id="hZvuk" onclick="prehrajZvuk()">🔊 Přehrát znovu</button>` : ''}
+    ${q.zvuk ? `
+      <div class="prehravac" id="hPrehravac">
+        <button class="ph-btn" id="hZvuk" onclick="prepniZvuk()" aria-label="Přehrát">▶︎</button>
+        <div class="ph-lista" onclick="skocZvuk(event)"><div class="ph-fill" id="hZvukFill"></div></div>
+        <span class="ph-cas" id="hZvukCas">0:00</span>
+      </div>` : ''}
     <div class="cas">
       <div class="cas-kruh" id="ck">
         <svg width="74" height="74"><circle class="bg" cx="37" cy="37" r="32"/>
@@ -840,9 +881,9 @@ function spustReveal(cas){
 }
 
 /* ── ZVUK ──
-   Prohlížeč nedovolí přehrát zvuk sám od sebe. Tady to projde, protože hru
-   posouváš kliknutím — to se počítá jako svolení. Když by to přesto selhalo,
-   je tu tlačítko Přehrát znovu. ── */
+   Plnohodnotný přehrávač: pustí se sám, jakmile spustíš otázku (kliknutí na
+   tlačítko se počítá jako svolení, takže to prohlížeč povolí). Pak už si s ním
+   děláš, co chceš — pauza, přetočení, opakování. ── */
 let hAudio = null;
 
 function prehrajZvuk(){
@@ -850,13 +891,37 @@ function prehrajZvuk(){
   if(!q || !q.zvuk) return;
   zastavZvuk();
   hAudio = new Audio(q.zvuk);
-  const b = $('#hZvuk');
-  hAudio.onerror = () => { if(b) b.innerHTML = '<span class="chyba">Zvuk se nenačetl — zkontroluj odkaz</span>'; };
-  hAudio.onended = () => { if(b) b.textContent = '🔊 Přehrát znovu'; };
-  const p = hAudio.play();
-  if(p && p.catch) p.catch(() => { if(b) b.textContent = '🔊 Klikni pro přehrání'; });
-  if(b) b.textContent = '🔊 Hraje… (klikni pro znovu)';
+
+  hAudio.ontimeupdate = () => {
+    if(!hAudio.duration) return;
+    const f = $('#hZvukFill'); if(f) f.style.width = (hAudio.currentTime / hAudio.duration * 100) + '%';
+    const c = $('#hZvukCas');  if(c) c.textContent = formatCas(hAudio.currentTime);
+  };
+  hAudio.onended = () => { stavTlacitkaZvuku('▶︎'); const f = $('#hZvukFill'); if(f) f.style.width = '0%'; };
+  hAudio.onerror = () => {
+    const p = $('#hPrehravac');
+    if(p) p.innerHTML = '<span class="chyba">Zvuk se nepodařilo přehrát.</span>';
+  };
+
+  const pr = hAudio.play();
+  if(pr && pr.catch) pr.catch(() => stavTlacitkaZvuku('▶︎'));
+  stavTlacitkaZvuku('❙❙');
 }
+
+function prepniZvuk(){
+  if(!hAudio){ prehrajZvuk(); return; }
+  if(hAudio.paused){ hAudio.play(); stavTlacitkaZvuku('❙❙'); }
+  else { hAudio.pause(); stavTlacitkaZvuku('▶︎'); }
+}
+
+function skocZvuk(e){
+  if(!hAudio || !hAudio.duration) return;
+  const lista = e.currentTarget.getBoundingClientRect();
+  hAudio.currentTime = ((e.clientX - lista.left) / lista.width) * hAudio.duration;
+}
+
+function stavTlacitkaZvuku(znak){ const b = $('#hZvuk'); if(b) b.textContent = znak; }
+const formatCas = s => Math.floor(s/60) + ':' + String(Math.floor(s%60)).padStart(2,'0');
 
 function zastavZvuk(){
   if(hAudio){ try{ hAudio.pause(); }catch(e){} hAudio = null; }
@@ -1003,14 +1068,57 @@ function kresliStezku(hotovo){
   const n = KVIZ.length;
   const pos = i => 4 + (i / (n - 1)) * 92;
   const hotovych = hotovo ? n - 1 : Math.max(0, hIdx);
-  const body = KVIZ.map((_,i) =>
-    `<circle class="krok${i <= hotovych ? ' on' : ''}" cx="${pos(i)}%" cy="17" r="${i === hIdx && !hotovo ? 6 : 3.5}"/>`).join('');
-  $('#hStezka').innerHTML = `<svg viewBox="0 0 100 34" preserveAspectRatio="none" style="height:34px">
-      <line class="dash" x1="4%" y1="17" x2="96%" y2="17"/>
-      <line class="done" x1="4%" y1="17" x2="${pos(hotovych)}%" y2="17"/>
-    </svg>
-    <svg style="position:absolute;inset:0"><g>${body}</g>
-      <text class="putnik" x="${pos(hotovych)}%" y="24" text-anchor="middle">🦉</text></svg>`;
+
+  // Kostru stezky (čáry + tečky) kreslíme jen jednou. Sova je zvlášť, aby mohla
+  // plynule letět, ne přeskakovat s každým překreslením.
+  if(!$('#stezkaSvg')){
+    $('#hStezka').innerHTML = `
+      <svg id="stezkaSvg" viewBox="0 0 100 34" preserveAspectRatio="none" style="height:34px">
+        <line class="dash" x1="4%" y1="17" x2="96%" y2="17"/>
+        <line class="done" id="stezkaDone" x1="4%" y1="17" x2="4%" y2="17"/>
+        <g id="stezkaBody"></g>
+      </svg>
+      <div class="sova" id="sova">🦉</div>`;
+  }
+
+  $('#stezkaBody').innerHTML = KVIZ.map((_,i) =>
+    `<circle class="krok${i <= hotovych ? ' on' : ''}" cx="${pos(i)}%" cy="17"
+       r="${i === hIdx && !hotovo ? 5 : 3}"/>`).join('');
+
+  // lišta postupu: animujeme přes SVG (funguje i tam, kde CSS na x2 nereaguje)
+  const done = $('#stezkaDone');
+  if(done){
+    const odkud = done.getAttribute('x2') || '4%';
+    const kam = pos(hotovych) + '%';
+    done.setAttribute('x2', kam);
+    let an = done.querySelector('animate');
+    if(!an){
+      an = document.createElementNS('http://www.w3.org/2000/svg','animate');
+      an.setAttribute('attributeName','x2');
+      an.setAttribute('dur','1.1s');
+      an.setAttribute('fill','freeze');
+      an.setAttribute('calcMode','spline');
+      an.setAttribute('keySplines','.45 .05 .35 1');
+      an.setAttribute('keyTimes','0;1');
+      done.appendChild(an);
+    }
+    if(odkud !== kam){
+      an.setAttribute('values', `${odkud};${kam}`);
+      try{ an.beginElement(); }catch(e){}
+    }
+  }
+
+  const sova = $('#sova');
+  if(sova){
+    const cil = pos(hotovych);
+    sova.style.left = cil + '%';
+    // směr letu → sova se natočí, kam letí
+    const zpet = cil < (kresliStezku.kde || 0);
+    sova.style.transform = `translateX(-50%) scaleX(${zpet ? -1 : 1})`;
+    kresliStezku.kde = cil;
+    // u cíle zakrouží
+    sova.classList.toggle('dolet', hotovo === true);
+  }
 }
 
 const vsem = m => hHraci.forEach(h => { if(h.conn && h.conn.open) try{ h.conn.send(m); }catch(e){} });
@@ -1264,6 +1372,15 @@ function eKresli(){
   const sek = KVIZ.reduce((a,q) => a + (q.cas || 20) + 12, 0);
   $('#eDelka').textContent = Math.round(sek / 60);
 
+  // s vloženými fotkami a zvuky může kvíz narůst — ať o tom víš dřív, než narazíš
+  const mb = JSON.stringify(KVIZ).length / 1024 / 1024;
+  const v = $('#eVelikost');
+  if(v){
+    v.textContent = mb > 0.05 ? ` · ${mb.toFixed(1)} MB` : '';
+    v.style.color = mb > 4 ? 'var(--retrivr)' : 'var(--pergamen-2)';
+    if(mb > 4) v.textContent += ' — moc velké, zmenši nebo uber média';
+  }
+
   $('#eList').innerHTML = KVIZ.map((q,i) => `
     <div class="e-karta${i === eOtevrena ? ' otevrena' : ''}">
       <button class="e-hlava" onclick="eOtevri(${i})">
@@ -1345,25 +1462,33 @@ function eDetail(q, i){
 
   const obrazekPole = (q.typ === 'reveal' || q.typ === 'kviz') ? `
     <div class="e-pole">
-      <label>Obrázek — vlož odkaz${q.typ === 'reveal' ? ' (u warpu je povinný)' : ' (nepovinné)'}</label>
-      <input class="e-in" value="${esc(q.obrazek || '')}" placeholder="https://…"
-             oninput="ePole(${i},'obrazek',this.value)">
-      ${q.obrazek ? `<img class="e-nahled" src="${esc(q.obrazek)}" alt=""
-        onerror="this.style.display='none'">` : ''}
+      <label>Obrázek${q.typ === 'reveal' ? ' — u warpu je povinný' : ' (nepovinné)'}</label>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn ghost" style="padding:11px 18px;font-size:.85rem"
+                onclick="eVyber(${i},'obrazek')">📷 Vybrat z telefonu</button>
+        ${q.obrazek ? `<button class="btn ghost" style="padding:11px 18px;font-size:.85rem;color:var(--retrivr)"
+                        onclick="eSmazMedium(${i},'obrazek')">Odebrat</button>` : ''}
+      </div>
+      ${q.obrazek ? `<img class="e-nahled" src="${esc(q.obrazek)}" alt="">
+        <p class="e-hint">${velikost(q.obrazek)}</p>` : ''}
+      <p class="e-hint">Obrázek se uloží <b>přímo do kvízu</b> — nepotřebuješ ho nikam nahrávat.
+        Zmenším ho automaticky, ať soubor nenabobtná.</p>
     </div>` : '';
 
   const zvukPole = `
     <div class="e-pole">
-      <label>Zvuk — odkaz na nahrávku (nepovinné)</label>
-      <div style="display:flex;gap:10px">
-        <input class="e-in" value="${esc(q.zvuk || '')}" placeholder="https://…/zvuk.mp3"
-               oninput="ePole(${i},'zvuk',this.value)">
-        ${q.zvuk ? `<button class="btn ghost" style="padding:11px 18px;flex:none"
-                    onclick="eZkusZvuk(${i})">▶︎</button>` : ''}
+      <label>Zvuk (nepovinné)</label>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn ghost" style="padding:11px 18px;font-size:.85rem"
+                onclick="eVyber(${i},'zvuk')">🎵 Vybrat nahrávku</button>
+        ${q.zvuk ? `<button class="btn ghost" style="padding:11px 18px;font-size:.85rem"
+                     onclick="eZkusZvuk(${i})">▶︎ Přehrát</button>
+                    <button class="btn ghost" style="padding:11px 18px;font-size:.85rem;color:var(--retrivr)"
+                     onclick="eSmazMedium(${i},'zvuk')">Odebrat</button>` : ''}
       </div>
-      <p class="e-hint">Musí to být <b>přímý odkaz na zvukový soubor</b> (končí na .mp3, .m4a, .ogg).
-        Odkaz na YouTube nebo Spotify nefunguje — ty stránky přehrát nejdou.
-        Zvuk se pustí sám, jakmile otázku spustíš, a na obrazovce máš tlačítko na zopakování.</p>
+      ${q.zvuk ? `<p class="e-hint">${velikost(q.zvuk)}</p>` : ''}
+      <p class="e-hint">Vezmi krátkou ukázku, ideálně do 10 sekund. Formát .mp3 nebo .m4a.
+        Zvuky zvířat a nástrojů zdarma najdeš na <b>freesound.org</b> nebo <b>pixabay.com/sound-effects</b>.</p>
       <p class="e-hint" id="eZvukStav${i}"></p>
     </div>`;
 
@@ -1443,14 +1568,81 @@ function eZkusZvuk(i){
   const stav = $('#eZvukStav' + i);
   if(eAudio){ try{ eAudio.pause(); }catch(e){} }
   eAudio = new Audio(KVIZ[i].zvuk);
-  stav.innerHTML = 'Načítám…';
-  eAudio.oncanplay = () => stav.innerHTML =
+  stav.innerHTML = 'Přehrávám…';
+  eAudio.onended = () => stav.innerHTML =
     '<span style="color:var(--spravne);font-weight:900">Zvuk funguje ✓</span>';
   eAudio.onerror = () => stav.innerHTML =
-    '<span class="chyba">Zvuk se nenačetl. Odkaz musí vést přímo na soubor .mp3 nebo .m4a.</span>';
+    '<span class="chyba">Zvuk se nepodařilo přehrát. Zkus jiný formát (.mp3, .m4a).</span>';
   const p = eAudio.play();
   if(p && p.catch) p.catch(() => stav.innerHTML =
     '<span class="chyba">Prohlížeč zvuk nepustil. Klikni na ▶︎ ještě jednou.</span>');
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MÉDIA PŘÍMO V KVÍZU
+   ──────────────────────────────────────────────────────────────────────────
+   Soubor se převede na text a uloží dovnitř otázky. Kvíz je pak soběstačný —
+   nepotřebuje žádný hosting obrázků ani odkazy, které můžou přestat platit.
+   Obrázky cestou zmenšíme, jinak by kvíz nabobtnal do desítek megabajtů.
+   ══════════════════════════════════════════════════════════════════════════ */
+const velikost = d => {
+  const kb = Math.round(d.length * 0.75 / 1024);   // base64 → přibližné bajty
+  return kb > 1024 ? `${(kb/1024).toFixed(1)} MB` : `${kb} kB`;
+};
+
+function eVyber(i, co){
+  const vstup = document.createElement('input');
+  vstup.type = 'file';
+  vstup.accept = co === 'obrazek' ? 'image/*' : 'audio/*';
+  vstup.onchange = () => {
+    const f = vstup.files[0];
+    if(!f) return;
+    const stav = $('#eZvukStav' + i);
+    if(co === 'obrazek') zmensiObrazek(f, i);
+    else                 nactiZvuk(f, i, stav);
+  };
+  vstup.click();
+}
+
+/* Fotka z mobilu má klidně 4 MB. Do kvízu jí stačí zlomek. */
+function zmensiObrazek(f, i){
+  const cti = new FileReader();
+  cti.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 1200;
+      const m = Math.min(1, MAX / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width  = Math.round(img.width  * m);
+      c.height = Math.round(img.height * m);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      KVIZ[i].obrazek = c.toDataURL('image/jpeg', 0.82);
+      if(!eUloz()) eHlaska('Obrázek je vložený, ale do prohlížeče se nevešel — stáhni si otázky do souboru.');
+      eKresli();
+    };
+    img.onerror = () => eHlaska('Tenhle obrázek se nepodařilo načíst.');
+    img.src = cti.result;
+  };
+  cti.readAsDataURL(f);
+}
+
+function nactiZvuk(f, i, stav){
+  if(f.size > 3 * 1024 * 1024){
+    eHlaska('Nahrávka je moc dlouhá (přes 3 MB). Ustřihni z ní jen pár sekund.');
+    return;
+  }
+  const cti = new FileReader();
+  cti.onload = () => {
+    KVIZ[i].zvuk = cti.result;
+    if(!eUloz()) eHlaska('Zvuk je vložený, ale do prohlížeče se nevešel — stáhni si otázky do souboru.');
+    eKresli();
+  };
+  cti.readAsDataURL(f);
+}
+
+function eSmazMedium(i, co){
+  KVIZ[i][co] = '';
+  eZmena();
 }
 
 function eSpravne(i, j){ KVIZ[i].spravne = j; eZmena(); }
@@ -1515,6 +1707,27 @@ function eStahni(){
   a.download = 'otazky-strom-pokladu.json';
   a.click();
   URL.revokeObjectURL(a.href);
+}
+
+/* Vezme běžící stránku, vymění v ní sadu otázek za tu tvoji (i s fotkami
+   a zvuky) a vrátí hotový index.html. Ten nahraješ na GitHub a máš vystaráno —
+   média jsou uvnitř, nic se nemusí dohrávat. */
+function eStahniHtml(){
+  fetch(location.href)
+    .then(r => r.text())
+    .then(html => {
+      const novy = 'let KVIZ = ' + JSON.stringify(KVIZ, null, 1) + ';';
+      const zmeneny = html.replace(/let KVIZ = \[[\s\S]*?\n\];/, novy);
+      if(zmeneny === html){ eHlaska('Nepodařilo se vyměnit otázky v souboru.'); return; }
+      const b = new Blob([zmeneny], {type:'text/html'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(b);
+      a.download = 'index.html';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      eHlaska('Hotovo. Nahraj index.html na GitHub a hraj.');
+    })
+    .catch(() => eHlaska('Tohle jde jen na stránce spuštěné z adresy, ne z uloženého souboru.'));
 }
 
 const eNacti = () => $('#eFile').click();
