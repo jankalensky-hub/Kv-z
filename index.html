@@ -433,7 +433,7 @@ select.e-in{cursor:pointer}
 <div id="editor" class="hide">
   <div class="e-bar">
     <div>
-      <div class="eyebrow">Editor otázek</div>
+      <div class="eyebrow">Editor otázek · verze 4 (nahrávání zvuků a fotek)</div>
       <div style="font-family:var(--display);font-weight:800;font-size:1.7rem">
         <span id="ePocet">0</span> otázek · <span id="eDelka">0</span> min<span
           id="eVelikost" style="font-family:var(--body);font-size:.85rem;font-weight:900"></span>
@@ -544,6 +544,7 @@ let KVIZ = [
   {typ:'kviz', cas:20, otazka:"Kolik kamarádů se vydalo hledat Strom pokladů?", moznosti:["Dva","Tři","Čtyři","Deset"], spravne:2},
   {typ:'kviz', cas:20, otazka:"Které zvíře staví na potoce hráz?", moznosti:["Bobr","Liška","Sova","Kapr"], spravne:0},
   {typ:'kviz', cas:20, otazka:"Kolik nohou má pavouk?", moznosti:["Šest","Osm","Deset","Čtyři"], spravne:1},
+  {typ:'puzzle', cas:60, otazka:"Seřaď dny v týdnu od pondělí", poradi:["Pondělí","Úterý","Středa","Čtvrtek"]},
   {typ:'slider', cas:30, otazka:"Kolik dní má rok?", min:100, max:500, spravne:365},
   {typ:'kviz', cas:20, otazka:"Lední medvěd má pod bílou srstí černou kůži.", moznosti:["Pravda","Nepravda"], spravne:0},
   {typ:'reveal', cas:30, otazka:"Co se skrývá na obrázku?", moznosti:["Ježek","Kaštan","Kartáč","Bodlák"], spravne:0, obrazek:'', pokyn:"Doplň fotku ježka do pole Obrázek."},
@@ -563,6 +564,7 @@ let KVIZ = [
   {typ:'kviz', cas:25, otazka:"Které zvíře v zimě spí zimním spánkem?", moznosti:["Medvěd","Vlk","Liška","Srnka"], spravne:0},
   {typ:'slider', cas:30, otazka:"Kolik kostí má dospělý člověk?", min:50, max:500, spravne:206},
   {typ:'kviz', cas:30, otazka:"Kdo napsal knihu o Ferdovi Mravencovi?", moznosti:["Josef Lada","Ondřej Sekora","Karel Čapek","Božena Němcová"], spravne:1},
+  {typ:'puzzle', cas:60, otazka:"Seřaď roční období od jara", poradi:["Jaro","Léto","Podzim","Zima"]},
 
   /* ── KRAJ TŘETÍ — Údolí zkoušek ── */
   {typ:'kviz', cas:20, otazka:"Jaká barva vznikne, když smícháš modrou a žlutou?", moznosti:["Zelená","Fialová","Oranžová","Růžová"], spravne:0},
@@ -574,15 +576,18 @@ let KVIZ = [
   {typ:'text', cas:30, otazka:"Jak se jmenuje největší oceán na světě?", prijmi:["tichy","tichy ocean","pacifik"]},
   {typ:'kviz', cas:25, otazka:"Kolik hran má krychle?", moznosti:["Šest","Osm","Dvanáct","Šestnáct"], spravne:2},
   {typ:'kviz', cas:20, otazka:"Co vyrábí včela?", moznosti:["Med","Sýr","Pavučinu","Papír"], spravne:0},
+  {typ:'puzzle', cas:60, otazka:"Seřaď proměnu motýla od začátku", poradi:["Vajíčko","Housenka","Kukla","Motýl"]},
   {typ:'slider', cas:30, otazka:"Kolik metrů měří nejvyšší strom světa?", min:20, max:300, spravne:116, pokyn:"Je to sekvoj v Kalifornii. Jmenuje se Hyperion."},
 
   /* ── KRAJ ČTVRTÝ — Strom pokladů ── */
   {typ:'kviz', cas:25, otazka:"Které zvíře je nejrychlejší na souši?", moznosti:["Gepard","Lev","Kůň","Pštros"], spravne:0},
+  {typ:'puzzle', cas:60, otazka:"Seřaď jednotky času od nejkratší", poradi:["Vteřina","Minuta","Hodina","Den"]},
   {typ:'kviz', cas:25, otazka:"Kolik teček je dohromady na protilehlých stěnách hrací kostky?", moznosti:["Pět","Šest","Sedm","Osm"], spravne:2},
   {typ:'text', cas:30, otazka:"Napiš, jak se jmenuje hlavní město Slovenska.", prijmi:["bratislava"]},
   {typ:'kviz', cas:20, otazka:"Kolik je 7 × 8?", moznosti:["48","54","56","64"], spravne:2},
   {typ:'reveal', cas:30, otazka:"Kdo se skrývá na obrázku?", moznosti:["Vedoucí 1","Vedoucí 2","Vedoucí 3","Vedoucí 4"], spravne:0, obrazek:'', pokyn:"Doplň rozmazanou fotku vedoucího a přepiš jména v možnostech."},
   {typ:'kviz', cas:25, otazka:"Kdo namaloval Monu Lisu?", moznosti:["Leonardo da Vinci","Pablo Picasso","Vincent van Gogh","Alfons Mucha"], spravne:0},
+  {typ:'puzzle', cas:60, otazka:"Seřaď věci od nejlehčí po nejtěžší", poradi:["Pírko","Jablko","Cihla","Auto"]},
   {typ:'kviz', cas:25, otazka:"Kolik je 12 × 12?", moznosti:["124","132","144","154"], spravne:2},
   {typ:'slider', cas:60, otazka:"Kolik bonbónů je ve sklenici?", min:10, max:400, spravne:137, pokyn:"Zvedni sklenici nad hlavu. Vítěz si ji bere — i kdyby skončil poslední.", dvojnasobek:true},
 ];
@@ -1631,12 +1636,20 @@ function nactiZvuk(f, i, stav){
     eHlaska('Nahrávka je moc dlouhá (přes 3 MB). Ustřihni z ní jen pár sekund.');
     return;
   }
+  if(stav) stav.innerHTML = 'Načítám a zkouším přehrát…';
   const cti = new FileReader();
   cti.onload = () => {
     KVIZ[i].zvuk = cti.result;
     if(!eUloz()) eHlaska('Zvuk je vložený, ale do prohlížeče se nevešel — stáhni si otázky do souboru.');
     eKresli();
+    // hned ověříme, že je nahrávka přehratelná — ať to nezjistíš až uprostřed hry
+    const test = new Audio(cti.result);
+    test.oncanplaythrough = () => { const st = $('#eZvukStav' + i);
+      if(st) st.innerHTML = '<span style="color:var(--spravne);font-weight:900">Zvuk je vložený a funguje ✓</span>'; };
+    test.onerror = () => { const st = $('#eZvukStav' + i);
+      if(st) st.innerHTML = '<span class="chyba">Tenhle formát prohlížeč nepřehraje. Zkus .mp3 nebo .m4a.</span>'; };
   };
+  cti.onerror = () => eHlaska('Soubor se nepodařilo načíst.');
   cti.readAsDataURL(f);
 }
 
