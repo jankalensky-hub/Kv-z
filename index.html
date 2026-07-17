@@ -190,12 +190,25 @@ input[type=text]:focus{border-color:var(--lev)}
 }
 .h-odp.reveal .pocet{opacity:1}
 
+/* u warpu jsou odpovědi kompaktní řada 1×4 pod obrázkem, ať se vše vejde na výšku */
+.h-odp.warp{grid-template-columns:repeat(4,1fr);gap:10px;max-width:1100px}
+.h-odp.warp .o{padding:14px 16px;font-size:clamp(.85rem,1.3vw,1.15rem);
+  justify-content:center;text-align:center;gap:8px}
+.h-odp.warp .pocet{margin-left:0;position:absolute;top:6px;right:6px;padding:1px 8px;font-size:.8rem}
+@media(max-width:640px){
+  .h-odp.warp{grid-template-columns:1fr 1fr}
+}
+
 /* image reveal */
-.reveal-box{position:relative;width:min(620px,88vw);aspect-ratio:4/3;border:3px solid #2F5A49}
+.reveal-box{position:relative;width:min(440px,70vw);aspect-ratio:4/3;border:3px solid #2F5A49;
+  max-height:38vh;margin:0 auto}
 .reveal-box img{width:100%;height:100%;object-fit:cover;display:block}
 .reveal-grid{position:absolute;inset:0;display:grid;grid-template:repeat(6,1fr)/repeat(6,1fr)}
 .reveal-grid i{background:var(--les);transition:opacity .45s ease}
 .reveal-grid i.pryc{opacity:0}
+/* u warpu stlačíme mezery, ať se na monitor vejde otázka, obrázek, čas i 4 odpovědi */
+.hstage.jewarp{gap:14px;justify-content:flex-start;padding-top:10px}
+.hstage.jewarp .q-text{font-size:clamp(1.4rem,2.6vw,2.4rem)}
 
 /* slider host */
 .slider-osa{width:min(900px,92vw);position:relative;height:80px}
@@ -241,17 +254,65 @@ input[type=text]:focus{border-color:var(--lev)}
 .zr .bd{font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--lev)}
 .zr .zisk{font-size:.9rem;color:var(--spravne);font-weight:900}
 
+/* stupně vítězů v žebříčku (první tři) */
+.stupne-vitezu{display:flex;align-items:flex-end;gap:14px;justify-content:center;
+  margin-bottom:22px;flex-wrap:nowrap}
+.stupen{display:flex;flex-direction:column;align-items:center;gap:8px;width:min(30vw,200px);
+  animation:stupenDo .55s cubic-bezier(.2,1.3,.4,1) backwards}
+@keyframes stupenDo{from{transform:translateY(40px) scale(.8);opacity:0}to{transform:none;opacity:1}}
+.stupen .hlava{font-size:clamp(2rem,5vw,3rem);line-height:1}
+.stupen .jm{font-weight:900;font-size:clamp(1rem,2vw,1.3rem);text-align:center;line-height:1.15}
+.stupen .prir{font-size:.85rem;color:var(--spravne);font-weight:900;
+  animation:prirDo .5s ease .3s backwards}
+@keyframes prirDo{from{transform:translateY(-8px);opacity:0}to{transform:none;opacity:1}}
+.stupen .blok{
+  width:100%;background:#1B3A2E;border:2px solid var(--lev);border-radius:3px 3px 0 0;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;
+  padding-top:14px;position:relative
+}
+.stupen .blok .bd{font-family:var(--display);font-weight:800;font-size:clamp(1.4rem,3vw,2.2rem);color:var(--lev)}
+.stupen.p1 .blok{height:150px;background:var(--lev)}
+.stupen.p1 .blok .bd{color:var(--les)}
+.stupen.p2 .blok{height:110px}
+.stupen.p3 .blok{height:80px}
+/* tlačítko na ruční přidání bodů */
+.plus{
+  width:30px;height:30px;border-radius:50%;background:#0A1712;color:var(--pergamen);
+  border:2px solid var(--pergamen-2);font-size:1.1rem;font-weight:900;line-height:1;
+  display:grid;place-items:center;transition:transform .1s, border-color .1s;flex:none
+}
+.plus:hover{border-color:var(--lev);color:var(--lev);transform:scale(1.12)}
+.plus:active{transform:scale(.9)}
+.stupen.p1 .plus{border-color:var(--les);color:var(--les)}
+.plus.male{width:26px;height:26px;font-size:.95rem}
+
+/* panel ručních bodů */
+#rucniPanel{position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;
+  background:#0A1712cc;backdrop-filter:blur(3px)}
+#rucniPanel.vid{display:flex;animation:nmDo .25s ease}
+.rucni-box{background:#153126;border:2px solid var(--lev);border-radius:5px;padding:28px 30px;
+  display:flex;flex-direction:column;align-items:center;gap:18px;max-width:440px;width:90vw}
+.rucni-jm{font-family:var(--display);font-weight:800;font-size:2rem;color:var(--pergamen)}
+.rucni-tlacitka{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}
+.rucni-tlacitka button{
+  background:var(--lev);color:var(--les);font-weight:900;font-size:1.3rem;
+  padding:16px;border-radius:3px;transition:transform .1s
+}
+.rucni-tlacitka button:active{transform:scale(.94)}
+.rucni-tlacitka button.minus{background:#3A1F1C;color:var(--pergamen)}
+
 /* finále */
 .stupne{display:flex;align-items:flex-end;gap:16px;justify-content:center}
-.stupen{display:flex;flex-direction:column;align-items:center;gap:10px;width:180px}
-.stupen .blok{
+.stupen-f{display:flex;flex-direction:column;align-items:center;gap:10px;width:180px}
+.stupne .stupen{width:180px}
+.stupne .blok{
   width:100%;background:#1B3A2E;border:2px solid var(--lev);
   display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:2.4rem;color:var(--lev)
 }
-.stupen.p1 .blok{height:180px;background:var(--lev);color:var(--les)}
-.stupen.p2 .blok{height:130px}
-.stupen.p3 .blok{height:95px}
-.stupen .jm{font-weight:900;font-size:1.2rem;text-align:center}
+.stupne .stupen.p1 .blok{height:180px;background:var(--lev);color:var(--les)}
+.stupne .stupen.p2 .blok{height:130px}
+.stupne .stupen.p3 .blok{height:95px}
+.stupne .stupen .jm{font-weight:900;font-size:1.2rem;text-align:center}
 
 /* ══════════════════════════════════════════════════════════
    HRÁČ
@@ -499,6 +560,23 @@ select.e-in{cursor:pointer}
   <div class="nm-podtitul">Velcí drží palce 🤫</div>
 </div>
 
+<!-- ══════════ RUČNÍ BODY (překryv na hostovi) ══════════ -->
+<div id="rucniPanel">
+  <div class="rucni-box">
+    <div class="eyebrow">Přidat body týmu</div>
+    <div class="rucni-jm" id="rucniJmeno">—</div>
+    <div class="rucni-tlacitka">
+      <button onclick="rucniPridej(100)">+100</button>
+      <button onclick="rucniPridej(250)">+250</button>
+      <button onclick="rucniPridej(500)">+500</button>
+      <button onclick="rucniPridej(1000)">+1000</button>
+      <button class="minus" onclick="rucniPridej(-100)">−100</button>
+      <button class="minus" onclick="rucniPridej(-250)">−250</button>
+    </div>
+    <button class="btn ghost" onclick="rucniZrus()">Zavřít</button>
+  </div>
+</div>
+
 <!-- ══════════ HOST ══════════ -->
 <div id="host" class="hide">
   <div class="hbar">
@@ -697,6 +775,7 @@ function nabidniObnovu(s){
   $('#hKod').textContent = s.kod;
   $('#hStezka').innerHTML = '';
   kresliStezku.kde = 0;
+  $('#hStage').className = 'hstage';
   $('#hStage').innerHTML = `
     <div style="font-size:3rem">🧭</div>
     <div class="eyebrow">Našel jsem rozehranou hru</div>
@@ -802,6 +881,7 @@ function hLobby(){
     const off = !(h.conn && h.conn.open);
     return `<div class="chip"${off ? ' style="opacity:.4"' : ''}>${esc(h.jm)}${off ? ' ⏳' : ''}</div>`;
   }).join('');
+  $('#hStage').className = 'hstage';
   $('#hStage').innerHTML = `
     <div class="eyebrow">Na telefonu otevři tuhle stránku a zadej kód</div>
     <div style="font-family:var(--display);font-weight:800;font-size:clamp(4rem,13vw,9rem);
@@ -855,6 +935,7 @@ function pokracujOtazkou(){
   const q = KVIZ[hIdx];
   if(q.pokyn){
     hFaze = 'pokyn';
+    $('#hStage').className = 'hstage';
     $('#hStage').innerHTML = `
       <div class="q-typ">Otázka ${hIdx+1} z ${KVIZ.length}${q.nejmensi?' · jen nejmenší':''}${q.dvojnasobek?' · dvojnásobné body':''}</div>
       <div class="q-text">${esc(q.otazka)}</div>
@@ -886,6 +967,7 @@ function hSpustOdpocet(){
     media = `<img class="q-media" src="${esc(q.obrazek)}" alt="">`;
   }
 
+  $('#hStage').className = 'hstage' + (q.typ === 'reveal' ? ' jewarp' : '');
   $('#hStage').innerHTML = `
     <div class="q-typ">Otázka ${hIdx+1} z ${KVIZ.length}${q.nejmensi?' · jen nejmenší 🐣':''}${q.dvojnasobek?' · dvojnásobné body':''}</div>
     <div class="q-text">${esc(q.otazka)}</div>
@@ -930,7 +1012,8 @@ function hSpustOdpocet(){
 function hostPanelOdpovedi(q){
   if(q.typ === 'kviz' || q.typ === 'reveal'){
     const dve = q.moznosti.length === 2 ? ' dve' : '';
-    return `<div class="h-odp${dve}" id="hpanel">` + q.moznosti.map((m,i) =>
+    const warp = q.typ === 'reveal' ? ' warp' : '';   // warp = kompaktní řada 1×4
+    return `<div class="h-odp${dve}${warp}" id="hpanel">` + q.moznosti.map((m,i) =>
       `<div class="o a${i}" data-i="${i}">${esc(m)}
         <span class="pocet" id="pc${i}">0</span></div>`).join('') + '</div>';
   }
@@ -961,27 +1044,32 @@ function prehrajZvuk(){
   const q = KVIZ[hIdx];
   if(!q || !q.zvuk) return;
   zastavZvuk();
-  hAudio = new Audio(q.zvuk);
+  const a = new Audio(q.zvuk);   // pracujeme s vlastním elementem, ne s globálem
+  hAudio = a;
 
-  hAudio.ontimeupdate = () => {
-    if(!hAudio.duration) return;
-    const f = $('#hZvukFill'); if(f) f.style.width = (hAudio.currentTime / hAudio.duration * 100) + '%';
-    const c = $('#hZvukCas');  if(c) c.textContent = formatCas(hAudio.currentTime);
+  a.ontimeupdate = () => {
+    if(a !== hAudio || !a.duration) return;   // starý zvuk už neřešíme
+    const f = $('#hZvukFill'); if(f) f.style.width = (a.currentTime / a.duration * 100) + '%';
+    const c = $('#hZvukCas');  if(c) c.textContent = formatCas(a.currentTime);
   };
-  hAudio.onended = () => { stavTlacitkaZvuku('▶︎'); const f = $('#hZvukFill'); if(f) f.style.width = '0%'; };
-  hAudio.onerror = () => {
+  a.onended = () => {
+    if(a !== hAudio) return;
+    stavTlacitkaZvuku('▶︎'); const f = $('#hZvukFill'); if(f) f.style.width = '0%';
+  };
+  a.onerror = () => {
+    if(a !== hAudio) return;
     const p = $('#hPrehravac');
     if(p) p.innerHTML = '<span class="chyba">Zvuk se nepodařilo přehrát.</span>';
   };
 
-  const pr = hAudio.play();
+  const pr = a.play();
   if(pr && pr.catch) pr.catch(() => stavTlacitkaZvuku('▶︎'));
   stavTlacitkaZvuku('❙❙');
 }
 
 function prepniZvuk(){
   if(!hAudio){ prehrajZvuk(); return; }
-  if(hAudio.paused){ hAudio.play(); stavTlacitkaZvuku('❙❙'); }
+  if(hAudio.paused){ const pr = hAudio.play(); if(pr && pr.catch) pr.catch(()=>{}); stavTlacitkaZvuku('❙❙'); }
   else { hAudio.pause(); stavTlacitkaZvuku('▶︎'); }
 }
 
@@ -995,7 +1083,7 @@ function stavTlacitkaZvuku(znak){ const b = $('#hZvuk'); if(b) b.textContent = z
 const formatCas = s => Math.floor(s/60) + ':' + String(Math.floor(s%60)).padStart(2,'0');
 
 function zastavZvuk(){
-  if(hAudio){ try{ hAudio.pause(); }catch(e){} hAudio = null; }
+  if(hAudio){ const a = hAudio; hAudio = null; try{ a.pause(); a.ontimeupdate = null; }catch(e){} }
 }
 
 /* Veselá zvonkohra pro přechod „teď nejmenší". Tón si vyrobíme rovnou
@@ -1060,7 +1148,9 @@ function hostUkazVysledek(){
       } else if(q.typ === 'puzzle'){
         const trefa = q.poradi.filter((p,i) => o.v[i] === p).length;
         ok = trefa === q.poradi.length;
-        zisk = Math.round(1000 * (trefa / q.poradi.length));
+        // základ je přesnost (kolik položek sedí), tu vynásobíme rychlostí –
+        // rychlé a správné seřazení dá plný počet, pomalé zhruba polovinu
+        zisk = Math.round(1000 * (trefa / q.poradi.length) * rychlost);
       } else if(q.typ === 'text'){
         ok = q.prijmi.includes(bezDiakritiky(String(o.v)));
         zisk = ok ? Math.round(1000 * rychlost) : 0;
@@ -1120,20 +1210,70 @@ function hostUkazVysledek(){
 
 function hostZebricek(){
   hFaze = 'zebricek';
-  ulozHru();                       // odsud se dá hra kdykoli obnovit
+  ulozHru();
+  vykresliZebricek();
+  $('#hBtn').textContent = hIdx + 1 >= KVIZ.length ? 'Odhalit poklad' : 'Další otázka';
+  $('#hBtn').disabled = false;
+  $('#hSkip').classList.add('hide');
+}
+
+/* Vykreslení oddělené, ať se dá po ručním přidání bodů překreslit na místě. */
+function vykresliZebricek(){
   const z = [...hHraci.values()].sort((a,b) => b.body - a.body);
+  const [p1, p2, p3] = z;
+  const zbytek = z.slice(3);
+
+  const stupen = (h, misto) => h ? `
+    <div class="stupen p${misto}" style="animation-delay:${(4-misto)*.15}s">
+      <div class="hlava">${['🥇','🥈','🥉'][misto-1]}</div>
+      <div class="jm">${esc(h.jm)}</div>
+      ${h.zisk ? `<div class="prir">+${h.zisk}</div>` : ''}
+      <div class="blok">
+        <div class="bd">${h.body}</div>
+        <button class="plus" onclick="rucniBody('${esc(jmenoKlic(h.jm))}')" title="Přidat body">+</button>
+      </div>
+    </div>` : '';
+
+  $('#hStage').className = 'hstage';
   $('#hStage').innerHTML = `
     <div class="eyebrow">Kde jsme na cestě</div>
-    <div class="zebricek">` + z.map((h,i) => `
-      <div class="zr" style="animation-delay:${i*.06}s">
-        <span class="poradi">${i+1}</span>
+    <div class="stupne-vitezu">
+      ${stupen(p2,2)}${stupen(p1,1)}${stupen(p3,3)}
+    </div>
+    ${zbytek.length ? `<div class="zebricek">` + zbytek.map((h,i) => `
+      <div class="zr" style="animation-delay:${.5 + i*.08}s">
+        <span class="poradi">${i+4}</span>
         <span class="jm">${esc(h.jm)}</span>
         ${h.zisk > 0 ? `<span class="zisk">+${h.zisk}</span>` : ''}
         <span class="bd">${h.body}</span>
-      </div>`).join('') + '</div>';
-  $('#hBtn').textContent = hIdx + 1 >= KVIZ.length ? 'Odhalit poklad' : 'Další otázka';
-  $('#hBtn').disabled = false;
+        <button class="plus male" onclick="rucniBody('${esc(jmenoKlic(h.jm))}')" title="Přidat body">+</button>
+      </div>`).join('') + '</div>' : ''}`;
 }
+
+/* Ruční body pro sporné otázky. Moderátor vybere, kolik přidat. */
+let rucniProKoho = null;
+function rucniBody(k){
+  rucniProKoho = k;
+  const h = hHraci.get(k);
+  if(!h) return;
+  $('#rucniJmeno').textContent = h.jm;
+  $('#rucniPanel').classList.add('vid');
+}
+function rucniPridej(kolik){
+  const h = hHraci.get(rucniProKoho);
+  if(h){
+    h.body = Math.max(0, h.body + kolik);
+    h.zisk = (h.zisk || 0) + kolik;
+    if(h.conn && h.conn.open){
+      const z = [...hHraci.values()].sort((a,b)=>b.body-a.body);
+      h.conn.send({t:'body', body:h.body, misto:z.indexOf(h)+1, z:z.length, bonus:kolik});
+    }
+    ulozHru();
+  }
+  $('#rucniPanel').classList.remove('vid');
+  vykresliZebricek();
+}
+function rucniZrus(){ $('#rucniPanel').classList.remove('vid'); }
 
 function hostFinale(){
   hFaze = 'konec';
@@ -1145,6 +1285,7 @@ function hostFinale(){
   });
   zapomenHru();                    // hra je dohraná, není co obnovovat
   kresliStezku(true);
+  $('#hStage').className = 'hstage';
   $('#hStage').innerHTML = `
     <div style="font-size:4rem">🌳</div>
     <div class="eyebrow">Strom pokladů</div>
@@ -1329,6 +1470,15 @@ function pData(d){
   }
   if(d.t === 'cekej')    pCekam('Chystá se otázka', 'Dívej se na obrazovku.');
   if(d.t === 'nejmensi') pNejmensi();
+  if(d.t === 'body'){
+    pBody = d.body;
+    $('#pBody').textContent = pBody;
+    if(d.bonus){
+      const zn = d.bonus > 0 ? '+' + d.bonus : d.bonus;
+      pCekam(d.bonus > 0 ? 'Body navíc! ' + zn : 'Úprava bodů ' + zn,
+             `Teď máš ${d.body} bodů · ${d.misto}. místo`);
+    }
+  }
   if(d.t === 'otazka')   pOtazka(d);
   if(d.t === 'vysledek') pVysledek(d);
   if(d.t === 'konec')    pKonec(d);
