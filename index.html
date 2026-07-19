@@ -200,8 +200,8 @@ input[type=text]:focus{border-color:var(--lev)}
 }
 
 /* image reveal */
-.reveal-box{position:relative;width:min(440px,70vw);aspect-ratio:4/3;border:3px solid #2F5A49;
-  max-height:38vh;margin:0 auto}
+.reveal-box{position:relative;width:min(640px,84vw);aspect-ratio:4/3;border:3px solid #2F5A49;
+  max-height:48vh;margin:0 auto}
 .reveal-box img{width:100%;height:100%;object-fit:cover;display:block}
 .reveal-grid{position:absolute;inset:0;display:grid;grid-template:repeat(6,1fr)/repeat(6,1fr)}
 .reveal-grid i{background:var(--les);transition:opacity .45s ease}
@@ -348,6 +348,15 @@ input[type=text]:focus{border-color:var(--lev)}
 .p-slider .cislo{
   font-family:var(--display);font-weight:800;font-size:4.5rem;text-align:center;color:var(--lev);line-height:1
 }
+.p-slider .cislo-vstup{
+  font-family:var(--display);font-weight:800;font-size:4rem;text-align:center;color:var(--lev);
+  background:transparent;border:none;border-bottom:3px dashed #2F5A49;border-radius:0;
+  width:100%;max-width:280px;margin:0 auto;padding:4px 0;outline:none;line-height:1;
+  -moz-appearance:textfield
+}
+.p-slider .cislo-vstup:focus{border-bottom-color:var(--lev)}
+.p-slider .cislo-vstup::-webkit-outer-spin-button,
+.p-slider .cislo-vstup::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .p-slider input[type=range]{
   -webkit-appearance:none;width:100%;height:14px;background:#2F5A49;border-radius:2px;outline:none
 }
@@ -728,6 +737,21 @@ const bezDiakritiky = s => s.toLowerCase().trim()
 let hPeer, hKod, hHraci = new Map(), hIdx = -1, hFaze = 'lobby',
     hDeadline = 0, hTimer = null, hOdpovedi = new Map(), hWake = null;
 
+/* Spojení jde přes internet, takže děti NEMUSÍ být na stejné wifi — funguje
+   i mobilní datové připojení. STUN pomáhá najít cestu, TURN je záložní
+   přenos pro přísné sítě (školní wifi, někteří operátoři), které přímé
+   spojení blokují. */
+const PEER_CFG = {
+  debug: 0,
+  config: { iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'turn:openrelay.metered.ca:80',  username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+  ]}
+};
+
 const jmenoKlic = j => bezDiakritiky(String(j)).replace(/\s+/g, '');
 
 /* ── uložení rozehrané hry ── */
@@ -814,7 +838,7 @@ function zalozHru(kod, idx, hraci){
    Zkusíme to několikrát, místo abychom hru shodili. */
 function pripojPeer(pokus){
   if(hPeer){ try{ hPeer.destroy(); }catch(e){} }
-  hPeer = new Peer('strompokladu-' + hKod, {debug:0});
+  hPeer = new Peer('strompokladu-' + hKod, PEER_CFG);
 
   hPeer.on('open', () => { $('#hKod').textContent = hKod; });
 
@@ -841,22 +865,27 @@ function pripojPeer(pokus){
   });
 }
 
-/* Přihlášení i návrat po výpadku řeší jedna cesta: rozhoduje jméno. */
+/* Přihlášení i návrat po výpadku řeší jedna cesta: rozhoduje jméno.
+   Když ale přijde druhé dítě se stejným jménem (a to první je pořád
+   připojené), je to jiné dítě — dostane číslovku, aby nesplynuli. */
 function prihlas(conn, jm){
-  const k = jmenoKlic(jm);
-  const znamy = hHraci.get(k);
+  let k = jmenoKlic(jm);
+  let znamy = hHraci.get(k);
+
+  if(znamy && znamy.conn && znamy.conn.open && znamy.conn !== conn){
+    let n = 2;
+    while(hHraci.has(jmenoKlic(jm + n))) n++;
+    jm = jm + ' ' + n;
+    k = jmenoKlic(jm);
+    znamy = null;
+  }
 
   if(znamy){
     znamy.conn = conn;                     // dítě se vrátilo, body mu zůstávají
     conn.send({t:'ok', jm:znamy.jm, body:znamy.body, vratil:true});
   } else {
-    if(hFaze !== 'lobby'){                 // nový hráč uprostřed hry – ale pustíme ho
-      hHraci.set(k, {jm, body:0, conn, zisk:0});
-      conn.send({t:'ok', jm, body:0, vratil:false});
-    } else {
-      hHraci.set(k, {jm, body:0, conn, zisk:0});
-      conn.send({t:'ok', jm, body:0, vratil:false});
-    }
+    hHraci.set(k, {jm, body:0, conn, zisk:0});
+    conn.send({t:'ok', jm, body:0, vratil:false});
   }
 
   ulozHru();
@@ -1413,7 +1442,7 @@ function spojSe(prvni){
   clearTimeout(pNavrat);
   if(pPeer){ try{ pPeer.destroy(); }catch(e){} }
 
-  pPeer = new Peer({debug:0});
+  pPeer = new Peer(PEER_CFG);
 
   pPeer.on('open', () => {
     pConn = pPeer.connect('strompokladu-' + pKodHry, {reliable:true});
@@ -1425,15 +1454,26 @@ function spojSe(prvni){
     setTimeout(() => {
       if(pConn && !pConn.open){
         if(prvni) $('#pChyba').innerHTML =
-          '<span class="chyba">Hru s tímhle kódem nenacházím. Zkontroluj číslo na velké obrazovce.</span>';
+          '<span class="chyba">Hra existuje, ale spojení se nedaří navázat — síť ho nejspíš blokuje. ' +
+          'Zkus to znovu, případně přepni wifi/data.</span>';
         else navratDoHry();
       }
-    }, 6000);
+    }, 14000);
+    setTimeout(() => {
+      if(pConn && !pConn.open && prvni)
+        $('#pChyba').textContent = 'Navazuji spojení, chvilku vydrž…';
+    }, 4000);
   });
 
-  pPeer.on('error', () => {
+  pPeer.on('error', (e) => {
+    if(e && e.type === 'peer-unavailable'){
+      if(prvni) $('#pChyba').innerHTML =
+        '<span class="chyba">Hru s tímhle kódem nenacházím. Zkontroluj číslo na velké obrazovce.</span>';
+      else navratDoHry();
+      return;
+    }
     if(prvni) $('#pChyba').innerHTML =
-      '<span class="chyba">Nedaří se připojit. Jsi na wifi?</span>';
+      '<span class="chyba">Nedaří se připojit. Zkontroluj internet (wifi nebo data).</span>';
     else navratDoHry();
   });
 
@@ -1463,6 +1503,10 @@ function pData(d){
   if(d.t === 'ok'){
     pVeHre = true;
     pBody = d.body || 0;
+    if(d.jm && d.jm !== pJmeno){
+      pJmeno = d.jm;                       // host jméno odlišil číslovkou (duplicita)
+      try{ sessionStorage.setItem('strom-hrac', JSON.stringify({kod:pKodHry, jm:pJmeno})); }catch(e){}
+    }
     $('#pBar').classList.remove('hide');
     $('#pJmeno').textContent = pJmeno;
     $('#pBody').textContent = pBody;
@@ -1510,19 +1554,20 @@ function pOtazka(q){
       `<button class="a${i}" onclick="posli(${i})">${esc(m)}</button>`).join('') + '</div>';
 
   } else if(q.typ === 'slider'){
-    // Náhodný start, u každého hráče jiný. Kdyby slider startoval uprostřed,
-    // stačilo by u otázek se správnou odpovědí poblíž středu jen odeslat
-    // výchozí hodnotu — a tipovačka by přestala být tipovačkou.
+    // Náhodný start, u každého hráče jiný. A vedle slideru i políčko na přímé
+    // vepsání — u velkých rozsahů je posuvník příliš citlivý na přesnou trefu.
     const start = q.min + Math.floor(Math.random() * (q.max - q.min + 1));
     $('#pStage').innerHTML = `
       <div class="p-slider">
-        <div class="cislo" id="sv">${start}</div>
+        <input type="number" class="cislo-vstup" id="sv" value="${start}"
+               min="${q.min}" max="${q.max}" inputmode="numeric"
+               oninput="sliderZeVstupu(${q.min},${q.max})">
         <input type="range" id="sr" min="${q.min}" max="${q.max}" value="${start}"
-               oninput="document.getElementById('sv').textContent=this.value;
+               oninput="document.getElementById('sv').value=this.value;
                         document.getElementById('sb').disabled=false">
         <div class="kraje"><span>${q.min}</span><span>${q.max}</span></div>
         <button class="btn" id="sb" disabled
-                onclick="posli(+document.getElementById('sr').value)">Posuň a tipni</button>
+                onclick="posliSlider(${q.min},${q.max})">Posuň nebo napiš a tipni</button>
       </div>`;
 
   } else if(q.typ === 'puzzle'){
@@ -1539,6 +1584,20 @@ function pOtazka(q){
         <button class="btn" onclick="posli(document.getElementById('tx').value)">Odeslat</button>
       </div>`;
   }
+}
+
+/* políčko ↔ posuvník: co dítě napíše, posuvník zrcadlí, a naopak */
+function sliderZeVstupu(min, max){
+  const v = document.getElementById('sv');
+  const r = document.getElementById('sr');
+  const b = document.getElementById('sb');
+  const n = parseInt(v.value, 10);
+  if(!isNaN(n)){ r.value = Math.max(min, Math.min(max, n)); b.disabled = false; }
+}
+function posliSlider(min, max){
+  let n = parseInt(document.getElementById('sv').value, 10);
+  if(isNaN(n)) n = +document.getElementById('sr').value;
+  posli(Math.max(min, Math.min(max, n)));
 }
 
 function klepniPuzzle(el){
