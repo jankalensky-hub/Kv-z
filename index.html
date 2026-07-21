@@ -738,19 +738,39 @@ let hPeer, hKod, hHraci = new Map(), hIdx = -1, hFaze = 'lobby',
     hDeadline = 0, hTimer = null, hOdpovedi = new Map(), hWake = null;
 
 /* Spojení jde přes internet, takže děti NEMUSÍ být na stejné wifi — funguje
-   i mobilní datové připojení. STUN pomáhá najít cestu, TURN je záložní
-   přenos pro přísné sítě (školní wifi, někteří operátoři), které přímé
-   spojení blokují. */
-const PEER_CFG = {
-  debug: 0,
-  config: { iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'turn:openrelay.metered.ca:80',  username: 'openrelayproject', credential: 'openrelayproject' },
-    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
-    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
-  ]}
-};
+   i přes mobilní data. STUN pomůže najít přímou cestu; když ji síť blokuje
+   (školní wifi, někteří operátoři), je potřeba TURN server, který data
+   přenese. Čerstvé TURN kredenciály si bereme z Cloudflare až za běhu —
+   natvrdo zapsaná hesla časem zastarají a přestanou fungovat. */
+let ICE_SERVERS = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+];
+const PEER_CFG = () => ({ debug: 0, config: { iceServers: ICE_SERVERS } });
+
+let turnNacteno = false;
+async function nactiTurn(){
+  if(turnNacteno) return true;   // stačí jednou za život stránky
+  turnNacteno = true;
+  let uspech = false;
+  // 1) Cloudflare — čerstvé krátkodobé kredenciály, spolehlivý a rychlý
+  try{
+    const r = await fetch('https://speed.cloudflare.com/turn-creds', {cache:'no-store'});
+    if(r.ok){
+      const d = await r.json();
+      const s = d.iceServers;
+      if(Array.isArray(s)){ ICE_SERVERS = ICE_SERVERS.concat(s); uspech = true; }
+      else if(s && s.urls){ ICE_SERVERS.push(s); uspech = true; }
+    }
+  }catch(e){}
+  // 2) záloha s pevnými kredenciály, kdyby Cloudflare zrovna neodpověděl
+  ICE_SERVERS.push(
+    { urls: 'turn:freestun.net:3478', username: 'free', credential: 'free' },
+    { urls: 'turns:freestun.net:5350', username: 'free', credential: 'free' }
+  );
+  // TURN je k dispozici tak jako tak (aspoň záloha) → spojení přes data má šanci
+  return true;
+}
 
 const jmenoKlic = j => bezDiakritiky(String(j)).replace(/\s+/g, '');
 
@@ -783,12 +803,14 @@ document.addEventListener('visibilitychange', () => {
   if(document.visibilityState === 'visible' && hPeer) drzObrazovku();
 });
 
-function spustHosta(){
+async function spustHosta(){
   eObnov();
   $('#role').classList.add('hide');
   $('#editor').classList.add('hide');
   $('#host').classList.remove('hide');
   drzObrazovku();
+  $('#hKod').innerHTML = '<span style="font-size:1rem">Připravuji spojení…</span>';
+  await nactiTurn();                       // čerstvé TURN kredenciály, ať jde i mobilní data
 
   const rozehrano = nactiHru();
   if(rozehrano && rozehrano.idx >= 0){ nabidniObnovu(rozehrano); return; }
@@ -838,7 +860,7 @@ function zalozHru(kod, idx, hraci){
    Zkusíme to několikrát, místo abychom hru shodili. */
 function pripojPeer(pokus){
   if(hPeer){ try{ hPeer.destroy(); }catch(e){} }
-  hPeer = new Peer('strompokladu-' + hKod, PEER_CFG);
+  hPeer = new Peer('strompokladu-' + hKod, PEER_CFG());
 
   hPeer.on('open', () => { $('#hKod').textContent = hKod; });
 
@@ -1424,7 +1446,7 @@ function ukazHrace(){
     </div>`;
 }
 
-function pripoj(){
+async function pripoj(){
   const kod = $('#pKod').value.trim();
   const jm  = $('#pJm').value.trim();
   if(kod.length !== 4 || !jm){
@@ -1434,6 +1456,7 @@ function pripoj(){
   pJmeno = jm;
   try{ sessionStorage.setItem('strom-hrac', JSON.stringify({kod, jm})); }catch(e){}
   $('#pChyba').textContent = 'Připojuju…';
+  await nactiTurn();                        // ať funguje i přes mobilní data
   spojSe(true);
 }
 
@@ -1442,7 +1465,7 @@ function spojSe(prvni){
   clearTimeout(pNavrat);
   if(pPeer){ try{ pPeer.destroy(); }catch(e){} }
 
-  pPeer = new Peer(PEER_CFG);
+  pPeer = new Peer(PEER_CFG());
 
   pPeer.on('open', () => {
     pConn = pPeer.connect('strompokladu-' + pKodHry, {reliable:true});
@@ -2123,7 +2146,17 @@ window.addEventListener('beforeunload', e => {
 
   if(location.hash === '#vedu'){
     $('#role').classList.remove('hide');
-    $('#diag').innerHTML = kontrola;
+    $('#diag').innerHTML = kontrola +
+      '<div id="diagTurn" style="margin-top:8px">Testuji server pro spojení přes data…</div>';
+    // vyzkoušíme, jestli se načtou TURN kredenciály (potřeba pro připojení bez společné wifi)
+    nactiTurn().then(ok => {
+      const d = $('#diagTurn');
+      if(!d) return;
+      d.innerHTML = ok
+        ? '<span style="color:var(--spravne);font-weight:900">✓</span> Spojení přes mobilní data připraveno'
+        : '<span style="color:var(--retrivr);font-weight:900">✕</span> Server pro data neodpovídá — '
+          + 'děti se připojí jen na stejné wifi. Zkus obnovit stránku.';
+    });
   } else {
     ukazHrace();
   }
